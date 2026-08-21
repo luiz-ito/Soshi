@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Diário de Controle</title>
+<style>
+  :root{
+    color-scheme:dark;
+    --ink:#14161F;
+    --ink-soft:#1E2130;
+    --ink-text:#F2F1EC;
+    --paper:#1C1C1E;
+    --fill:#2C2C2E;
+    --stone:#000000;
+    --marigold:#E8B454;
+    --marigold-dark:#F0C878;
+    --teal:#4FA89E;
+    --coral:#E8846F;
+    --text:#F2F2F7;
+    --muted:#9B9BA1;
+    --line:#3A3A3C;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --radius-sm:9px;
+    --shadow:0 4px 16px rgba(0,0,0,0.55);
+    --font-display: "Iowan Old Style","Palatino Linotype","Book Antiqua",Georgia,serif;
+    --font-body: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --font-mono: ui-monospace,"SF Mono","Cascadia Code","Consolas",monospace;
+
+    --c-faculdade:#5FBE6C;
+    --c-academia:#E8B454;
+    --c-carreira:#5C8DF2;
+    --c-outros:#A47CDB;
+
+    --cardio-color:#7C5CBF;
+    --treino-color:#4C8DF0;
+    --urgent-color:#E5433E;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--stone);
+    background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0);
+    background-size:22px 22px;
+    font-family:var(--font-body);
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:0 0 40px;
+  }
+  .app{width:100%;max-width:480px;min-height:100vh;background:var(--stone);display:flex;flex-direction:column;position:relative;}
+  @media (min-width:560px){
+    .app{margin:24px 0;min-height:calc(100vh - 48px);border-radius:28px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.65);}
+  }
+  a,button,input,textarea,select{font-family:inherit;}
+  button{cursor:pointer;}
+  :focus-visible{outline:2px solid var(--marigold-dark);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important;transition-duration:.001ms !important;} }
+
+  .screen{display:none;flex-direction:column;flex:1;}
+  .screen.active{display:flex;}
+
+  /* ---------- HEADER ---------- */
+  .header{background:var(--ink);color:#F4EFE3;padding:24px 20px 20px;position:relative;overflow:hidden;flex-shrink:0;border-bottom:1px solid var(--line);}
+  .header::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;
+    background:radial-gradient(circle, rgba(232,180,84,0.16), transparent 70%);}
+  .header .eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--marigold);margin:0 0 6px;}
+  .header h1{font-family:var(--font-display);font-size:25px;font-weight:600;margin:0 0 3px;letter-spacing:.01em;}
+  .header .subdate{font-size:13px;color:#A9B4C4;margin:0;}
+
+  .screen-header{
+    background:var(--ink);color:#F4EFE3;padding:16px 16px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;position:relative;border-bottom:1px solid var(--line);
+  }
+  .screen-header.cat-themed{background:var(--cat-color, var(--ink));border-bottom-color:transparent;}
+  .back-btn{background:rgba(255,255,255,0.12);border:none;width:34px;height:34px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;color:#F4EFE3;}
+  .back-btn svg{width:16px;height:16px;}
+  .screen-header-title{flex:1;min-width:0;}
+  .screen-header-title h2{font-family:var(--font-display);font-size:19px;margin:0;display:flex;align-items:center;gap:8px;}
+  .screen-header-title .sh-sub{font-family:var(--font-mono);font-size:11.5px;color:rgba(244,239,227,0.7);margin-top:2px;text-transform:capitalize;}
+  .day-nav-inline{display:flex;align-items:center;gap:4px;}
+  .day-nav-inline button{background:rgba(255,255,255,0.12);border:none;width:28px;height:28px;border-radius:50%;color:#F4EFE3;display:flex;align-items:center;justify-content:center;}
+  .day-nav-inline svg{width:13px;height:13px;}
+
+  .content{padding:16px 16px 8px;display:flex;flex-direction:column;gap:14px;flex:1;overflow-y:auto;}
+
+  .card{background:var(--paper);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:16px 16px 16px;}
+  .card-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;}
+  .card-title{font-family:var(--font-display);font-size:17px;margin:0;display:flex;align-items:center;gap:8px;}
+  .card-title svg{width:17px;height:17px;flex-shrink:0;color:var(--ink-text);}
+  .block-desc{font-size:12px;color:var(--muted);margin:0;line-height:1.4;}
+
+  .icon-btn{flex-shrink:0;background:none;border:none;width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+    color:var(--muted);border-radius:50%;transition:background .15s,color .15s;}
+  .icon-btn:hover{background:rgba(232,132,111,0.16);color:var(--coral);}
+  .icon-btn svg{width:14px;height:14px;}
+
+  .empty-state{font-size:12.5px;color:var(--muted);text-align:center;padding:16px 8px;border:1px dashed var(--line);border-radius:var(--radius-md);margin:0;}
+
+  .stamp-check{flex-shrink:0;width:24px;height:24px;border-radius:50%;border:2px solid var(--ink-text);background:transparent;
+    display:flex;align-items:center;justify-content:center;padding:0;transition:background .15s,border-color .15s;}
+  .stamp-check.checked{background:var(--teal);border-color:var(--teal);}
+  .stamp-check svg{width:13px;height:13px;stroke:#F2F2F7;stroke-width:3;fill:none;stroke-dasharray:20;stroke-dashoffset:20;transition:stroke-dashoffset .25s ease;}
+  .stamp-check.checked svg{stroke-dashoffset:0;}
+
+  /* ---------- WEEK CARD (HOME) ---------- */
+  .week-header{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+  .week-header button{background:var(--fill);border:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--ink-text);flex-shrink:0;}
+  .week-header .week-label{font-family:var(--font-mono);font-size:11.5px;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;flex:1;text-align:center;}
+  .view-toggle{display:flex;background:var(--fill);border-radius:999px;padding:2px;flex-shrink:0;}
+  .view-toggle button{width:auto !important;border-radius:999px !important;padding:5px 10px;font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);background:transparent;}
+  .view-toggle button.active{background:var(--ink);color:var(--marigold);}
+  .week-grid{display:grid;grid-template-columns:26px repeat(7,1fr);gap:4px;margin-top:10px;align-items:start;}
+  .week-day-head{display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .week-axis-col{display:flex;flex-direction:column;gap:6px;padding:6px 0 8px;}
+  .week-day{background:transparent;border:none;display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px 2px 8px;border-radius:12px;}
+  .week-day:hover{background:rgba(255,255,255,0.06);}
+  .week-day.today .wd-num{background:var(--ink);color:var(--marigold);}
+  .wd-letter{font-family:var(--font-mono);font-size:9.5px;color:var(--muted);text-transform:uppercase;}
+  .wd-num{font-size:13px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+  .week-day-strip{width:100%;background:var(--fill);border:1px solid var(--line);border-radius:8px;position:relative;overflow:hidden;}
+  .week-hour-axis{position:relative;}
+  .week-hour-label{position:absolute;right:2px;transform:translateY(-50%);font-family:var(--font-mono);font-size:8px;color:var(--muted);white-space:nowrap;line-height:1;}
+  .week-bar{position:absolute;border-radius:3px;min-height:5px;box-sizing:border-box;}
+  .week-bar.urgent{background:var(--urgent-color) !important;box-shadow:0 0 0 1.5px rgba(229,67,62,0.5);}
+  .week-total{font-family:var(--font-mono);font-size:9.5px;color:var(--muted);}
+  .bar-comment-mark{position:absolute;top:0;right:1px;font-size:9px;line-height:1;color:#fff;font-weight:700;text-shadow:0 0 2px rgba(0,0,0,0.6);cursor:pointer;padding:1px 2px;}
+
+  /* ---------- MONTH VIEW (HOME) ---------- */
+  .month-grid{display:none;margin-top:10px;}
+  .month-grid.active{display:block;}
+  .month-weekday-row{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;}
+  .month-weekday-row span{text-align:center;font-family:var(--font-mono);font-size:9.5px;color:var(--muted);text-transform:uppercase;}
+  .month-cells{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .month-cell{aspect-ratio:1;background:var(--fill);border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:2px;color:var(--text);font-size:11.5px;position:relative;}
+  .month-cell.outside{opacity:.28;}
+  .month-cell.today{border-color:var(--marigold-dark);}
+  .month-cell.selected-week{background:color-mix(in srgb, var(--marigold) 16%, var(--fill));}
+  .month-cell .m-dots{display:flex;gap:2px;height:5px;}
+  .month-cell .m-dot{width:5px;height:5px;border-radius:50%;}
+  .month-label{font-family:var(--font-mono);font-size:11.5px;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;flex:1;text-align:center;}
+
+  /* ---------- COMENTÁRIOS ---------- */
+  .comment-mark{color:var(--marigold-dark);font-weight:700;cursor:pointer;margin-left:3px;font-size:1.05em;}
+  .comment-popover{
+    position:fixed;max-width:230px;background:var(--ink);color:var(--ink-text);font-size:12.5px;line-height:1.4;
+    padding:9px 11px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.5);z-index:200;
+  }
+  .comment-popover::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
+    border:6px solid transparent;border-top-color:var(--ink);}
+  .comment-popover.below::after{bottom:auto;top:-6px;border-top-color:transparent;border-bottom-color:var(--ink);}
+
+  /* ---------- CATEGORY HOME CARDS ---------- */
+  .cat-card{
+    display:flex;align-items:center;gap:12px;background:var(--paper);border-radius:var(--radius-lg);
+    box-shadow:var(--shadow);padding:14px 14px;border-left:5px solid var(--cat-color);text-align:left;width:100%;
+  }
+  .cat-card .cat-icon{width:38px;height:38px;border-radius:12px;background:color-mix(in srgb, var(--cat-color) 24%, var(--paper));
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--cat-color);}
+  .cat-card .cat-icon svg{width:19px;height:19px;}
+  .cat-card .cat-body{flex:1;min-width:0;}
+  .cat-card .cat-name{font-family:var(--font-display);font-size:16.5px;color:var(--ink-text);}
+  .cat-card .cat-meta{font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-top:2px;}
+  .cat-card .cat-count{font-family:var(--font-mono);font-size:12.5px;color:var(--cat-color);background:color-mix(in srgb, var(--cat-color) 20%, var(--fill));
+    flex-shrink:0;padding:5px 10px;border-radius:999px;letter-spacing:.02em;}
+
+  /* ---------- DAY TIMELINE (PROPORCIONAL) ---------- */
+  .day-timeline-wrap{max-height:460px;overflow-y:auto;border:1px solid var(--line);border-radius:var(--radius-md);position:relative;}
+  .day-timeline{position:relative;}
+  .day-hour-row{display:flex;height:60px;border-bottom:1px dashed var(--line);cursor:pointer;}
+  .day-hour-row:hover{background:rgba(255,255,255,0.04);}
+  .day-hour-row:last-child{border-bottom:none;}
+  .day-hour-row.current-hour{background:rgba(232,180,84,0.14);}
+  .day-hour-label{width:46px;flex-shrink:0;font-family:var(--font-mono);font-size:10px;color:var(--muted);padding:4px 0 0 6px;border-right:1px solid var(--line);}
+  .day-events-layer{position:absolute;top:0;left:47px;right:6px;bottom:0;cursor:pointer;}
+  .day-event-block{
+    position:absolute;border-radius:10px;padding:5px 8px;color:#fff;overflow:hidden;box-sizing:border-box;
+    display:flex;flex-direction:column;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.15);
+  }
+  .day-event-block.done{opacity:.45;}
+  .day-event-block.urgent{background:var(--urgent-color) !important;box-shadow:0 0 0 2px rgba(229,67,62,0.35),0 2px 8px rgba(229,67,62,0.4);}
+  .day-event-block .de-time{font-family:var(--font-mono);font-size:9.5px;opacity:.9;}
+  .day-event-block .de-title{font-size:12.5px;line-height:1.25;word-break:break-word;}
+  .day-event-block.done .de-title{text-decoration:line-through;}
+  .day-event-actions{position:absolute;top:3px;right:4px;display:flex;gap:3px;}
+  .de-btn{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.28);border:none;display:flex;align-items:center;justify-content:center;color:#fff;}
+  .de-btn svg{width:10px;height:10px;}
+
+  .quick-add-toggle{
+    display:flex;align-items:center;justify-content:center;gap:6px;background:var(--ink);color:var(--marigold);
+    border:none;border-radius:var(--radius-md);padding:11px;font-size:13px;font-family:var(--font-mono);
+    text-transform:uppercase;letter-spacing:.05em;
+  }
+  .quick-add-toggle svg{width:15px;height:15px;}
+
+  .schedule-form{display:flex;flex-direction:column;gap:8px;background:var(--paper);border-radius:var(--radius-lg);
+    box-shadow:var(--shadow);padding:14px;}
+  .schedule-form .row{display:flex;gap:6px;}
+  .schedule-form input[type="text"], .schedule-form select{
+    flex:1;min-width:0;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 10px;font-size:13.5px;background:var(--fill);color:var(--text);
+  }
+  .schedule-form input[type="time"], .schedule-form input[type="date"]{
+    border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:12.5px;font-family:var(--font-mono);background:var(--fill);color:var(--text);color-scheme:dark;
+  }
+  .field-label{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:2px;display:block;}
+  .day-chips{display:flex;gap:5px;flex-wrap:wrap;}
+  .day-chip{width:29px;height:29px;border-radius:50%;border:1.5px solid var(--line);background:var(--fill);font-family:var(--font-mono);
+    font-size:10.5px;color:var(--muted);display:flex;align-items:center;justify-content:center;}
+  .day-chip.active{background:var(--ink);color:var(--marigold);border-color:var(--ink);}
+  .repeat-row{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text);}
+  .repeat-row input[type="checkbox"]{width:16px;height:16px;accent-color:var(--ink);}
+  .repeat-row.urgent-row input[type="checkbox"]{accent-color:var(--urgent-color);}
+  .repeat-row.urgent-row{color:var(--urgent-color);font-weight:600;}
+  .submit-row{display:flex;justify-content:flex-end;gap:8px;}
+  .btn-primary{background:var(--ink);color:var(--marigold);border:none;border-radius:var(--radius-sm);padding:9px 16px;
+    font-size:12px;font-family:var(--font-mono);letter-spacing:.04em;text-transform:uppercase;display:flex;align-items:center;gap:6px;}
+  .btn-primary svg{width:13px;height:13px;}
+  .btn-ghost{background:var(--fill);color:var(--ink-text);border:none;border-radius:var(--radius-sm);padding:9px 14px;font-size:12px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.04em;}
+
+  /* ---------- CATEGORY SCREEN ---------- */
+  .stats-card{background:var(--paper);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:16px;}
+  .stats-placeholder{font-size:13px;color:var(--muted);text-align:center;padding:22px 10px;border:1px dashed var(--line);border-radius:var(--radius-md);}
+
+  .diet-row-title{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .diet-row-title .month-nav-mini{display:flex;align-items:center;gap:4px;}
+  .diet-row-title .month-nav-mini button{background:var(--fill);border:none;width:20px;height:20px;border-radius:50%;color:var(--ink-text);display:flex;align-items:center;justify-content:center;}
+  .diet-row-title .month-nav-mini span{font-family:var(--font-mono);font-size:10px;color:var(--muted);min-width:64px;text-align:center;}
+
+  .day-status-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .day-status-grid.month{gap:4px;}
+  .day-status-headrow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:5px;}
+  .day-status-grid.month + .day-status-headrow, .day-status-headrow.month{gap:4px;}
+  .day-status-headrow span{text-align:center;font-family:var(--font-mono);font-size:9px;color:var(--muted);text-transform:uppercase;}
+  .day-status-cell{border:1px solid var(--line);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;
+    height:70px;position:relative;background:var(--fill);}
+  .day-status-cell.month{height:auto;aspect-ratio:1;border-radius:6px;}
+  .day-status-cell.outside{opacity:.3;}
+  .day-status-cell.today{border-color:var(--marigold-dark);}
+  .day-status-cell .ds-third{flex:1;border:none;padding:0;background:var(--fill);cursor:pointer;}
+  .day-status-cell .ds-third.ds-cardio.on{background:var(--cardio-color);}
+  .day-status-cell .ds-third.ds-cardio.pending{background:color-mix(in srgb, var(--cardio-color) 35%, var(--fill));}
+  .day-status-cell .ds-third.ds-treino.on{background:var(--treino-color);}
+  .day-status-cell .ds-third.ds-treino.pending{background:color-mix(in srgb, var(--treino-color) 35%, var(--fill));}
+  .day-status-cell .ds-third.ds-dieta.seguiu{background:var(--teal);}
+  .day-status-cell .ds-third.ds-dieta.pouco{background:var(--marigold-dark);}
+  .day-status-cell .ds-third.ds-dieta.muito{background:var(--coral);}
+  .day-status-cell .ds-num{position:absolute;top:2px;right:4px;font-size:8.5px;font-family:var(--font-mono);
+    color:rgba(255,255,255,0.9);text-shadow:0 0 3px rgba(0,0,0,0.7);pointer-events:none;}
+
+  .legend-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-family:var(--font-mono);font-size:10px;color:var(--muted);}
+  .legend-row span{display:flex;align-items:center;gap:4px;}
+  .legend-dot{width:9px;height:9px;border-radius:3px;display:inline-block;}
+
+  .workout-row{display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
+  .workout-count{font-family:var(--font-display);font-size:20px;color:var(--ink-text);}
+  .workout-count small{font-family:var(--font-mono);font-size:11px;color:var(--muted);display:block;margin-top:2px;font-style:normal;}
+  .workout-btn{background:var(--marigold);color:var(--ink);border:none;border-radius:var(--radius-sm);padding:9px 13px;
+    font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+
+  .task-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .task-item{display:flex;align-items:flex-start;gap:10px;background:var(--fill);border:1px solid var(--line);border-radius:var(--radius-md);padding:10px;}
+  .task-item.done{opacity:.55;}
+  .task-item.done .task-title{text-decoration:line-through;}
+  .task-item.urgent{border-color:var(--urgent-color);box-shadow:0 0 0 1px rgba(229,67,62,0.3);}
+  .urgent-tag{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:#fff;
+    background:var(--urgent-color);border-radius:5px;padding:1px 5px;margin-right:5px;display:inline-block;}
+  .task-body{flex:1;min-width:0;}
+  .task-title{font-size:14px;word-break:break-word;display:block;}
+  .task-meta{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);margin-top:2px;}
+  .task-type-tag{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);
+    background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:1px 5px;margin-right:5px;display:inline-block;}
+  .task-actions{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+  .task-move{font-family:var(--font-mono);font-size:9.5px;border:1px solid var(--line);background:var(--fill);border-radius:6px;padding:3px 4px;color:var(--muted);}
+
+  /* ---------- STATS: TOGGLE SEMANA/MÊS + FRAÇÕES ---------- */
+  .stat-period-toggle{display:flex;background:var(--fill);border-radius:999px;padding:2px;width:fit-content;margin-bottom:12px;}
+  .stat-period-toggle button{border:none;background:transparent;font-family:var(--font-mono);font-size:10px;text-transform:uppercase;
+    letter-spacing:.03em;color:var(--muted);padding:6px 12px;border-radius:999px;}
+  .stat-period-toggle button.active{background:var(--ink);color:var(--marigold);}
+  .stat-frac-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .stat-frac-card{flex:1;min-width:90px;background:var(--fill);border:1px solid var(--line);border-radius:var(--radius-md);padding:10px 12px;}
+  .stat-frac-card .sf-label{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);}
+  .stat-frac-card .sf-value{font-family:var(--font-display);font-size:22px;margin-top:2px;color:var(--ink-text);}
+
+  .hours-chart{display:flex;align-items:flex-end;gap:6px;height:120px;padding:6px 2px 0;margin-bottom:14px;}
+  .hours-chart.month{gap:2px;}
+  .hc-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+  .hc-bar{width:100%;max-width:26px;background:var(--c-faculdade);border-radius:4px 4px 0 0;min-height:2px;transition:height .2s;}
+  .hc-bar-wrap.month .hc-bar{max-width:8px;border-radius:2px 2px 0 0;}
+  .hc-label{font-family:var(--font-mono);font-size:8.5px;color:var(--muted);margin-top:4px;height:11px;}
+  .career-money-card{background:linear-gradient(135deg, color-mix(in srgb, var(--c-carreira) 22%, var(--paper)), var(--fill));
+    border:1px solid var(--line);border-radius:var(--radius-md);padding:14px;margin-bottom:14px;}
+  .career-money-card .cm-label{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);}
+  .career-money-card .cm-value{font-family:var(--font-display);font-size:28px;color:var(--marigold-dark);margin-top:3px;}
+  .career-money-card .cm-sub{font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-top:4px;}
+
+  footer{text-align:center;font-family:var(--font-mono);font-size:10px;color:var(--muted);padding:14px 20px 4px;letter-spacing:.04em;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ HOME ============ -->
+  <div class="screen active" id="screen-home">
+    <header class="header">
+      <p class="eyebrow" id="greeting">Bom dia</p>
+      <h1 id="headerDate">—</h1>
+    </header>
+
+    <div class="content">
+      <!-- CALENDÁRIO DA SEMANA -->
+      <section class="card">
+        <div class="card-title-row">
+          <h2 class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v4M16 3v4"/></svg>
+            Calendário da semana
+          </h2>
+        </div>
+        <div class="week-header">
+          <button id="prevWeek" aria-label="Semana anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M15 18l-6-6 6-6"/></svg></button>
+          <span class="week-label" id="weekLabel">—</span>
+          <button id="nextWeek" aria-label="Próxima semana"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M9 18l6-6-6-6"/></svg></button>
+          <div class="view-toggle">
+            <button type="button" id="calViewToggle">Mês</button>
+          </div>
+        </div>
+        <div class="week-grid" id="weekGrid"></div>
+
+        <div class="month-grid" id="monthGrid">
+          <div class="week-header" style="margin-bottom:2px;">
+            <button id="prevMonth" aria-label="Mês anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <span class="month-label" id="monthLabel">—</span>
+            <button id="nextMonth" aria-label="Próximo mês"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M9 18l6-6-6-6"/></svg></button>
+          </div>
+          <div class="month-weekday-row"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span></div>
+          <div class="month-cells" id="monthCells"></div>
+        </div>
+
+
+      </section>
+
+      <!-- BLOCOS DE CATEGORIA -->
+      <div id="homeCatCards" style="display:flex;flex-direction:column;gap:12px;"></div>
+    </div>
+    <footer>diário de controle · seus dados ficam salvos apenas neste navegador</footer>
+  </div>
+
+  <!-- ============ DIA ============ -->
+  <div class="screen" id="screen-day">
+    <div class="screen-header">
+      <button class="back-btn" id="dayBack" aria-label="Voltar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="screen-header-title">
+        <h2>Dia</h2>
+        <div class="sh-sub" id="dayLabel">—</div>
+      </div>
+      <div class="day-nav-inline">
+        <button id="dayPrev" aria-label="Dia anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <button id="dayNext" aria-label="Próximo dia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg></button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="day-timeline-wrap">
+        <div class="day-timeline" id="dayTimeline"></div>
+      </div>
+
+      <button class="quick-add-toggle" id="dayAddToggle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+        Adicionar compromisso
+      </button>
+
+      <form class="schedule-form" id="dayAddForm" style="display:none;">
+        <div class="view-toggle" id="dayKindToggle" style="align-self:flex-start;">
+          <button type="button" class="active" data-kind="normal">Tarefa comum</button>
+          <button type="button" data-kind="session">Sessão de tarefa c/ prazo</button>
+        </div>
+        <div id="daySessionField" style="display:none;">
+          <span class="field-label">Tarefa com prazo</span>
+          <select id="dayTaskParent"></select>
+        </div>
+        <div id="dayTitleField">
+          <span class="field-label">Título</span>
+          <input type="text" id="dayTaskTitle" placeholder="Ex.: Reunião, aula, corrida…" maxlength="80">
+        </div>
+        <div class="row">
+          <div>
+            <span class="field-label">Horário</span>
+            <input type="time" id="dayTaskTime" required>
+          </div>
+          <div>
+            <span class="field-label">Duração</span>
+            <select id="dayTaskDuration">
+              <option value="30">30 min</option>
+              <option value="60" selected>1h</option>
+              <option value="90">1h30</option>
+              <option value="120">2h</option>
+              <option value="180">3h</option>
+              <option value="240">4h</option>
+              <option value="300">5h</option>
+              <option value="360">6h</option>
+              <option value="480">8h</option>
+              <option value="custom">Outra…</option>
+            </select>
+            <input type="number" id="dayTaskDurationCustom" min="0.25" step="0.25" placeholder="Horas" style="display:none;margin-top:4px;width:100%;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:12.5px;font-family:var(--font-mono);background:var(--fill);color:var(--text);">
+          </div>
+          <div style="flex:1" id="dayCategoryField">
+            <span class="field-label">Categoria</span>
+            <select id="dayTaskCategory">
+              <option value="faculdade">Faculdade</option>
+              <option value="academia">Academia e Alimentação</option>
+              <option value="carreira">Carreira</option>
+              <option value="outros">Outros</option>
+            </select>
+          </div>
+        </div>
+        <div id="dayTypeField" style="display:none;">
+          <span class="field-label">Tipo</span>
+          <select id="dayTaskType"></select>
+        </div>
+        <div>
+          <span class="field-label">Comentário (opcional)</span>
+          <input type="text" id="dayTaskComment" placeholder="Anotação sobre a tarefa…" maxlength="200">
+        </div>
+        <div id="dayUrgentField">
+        <label class="repeat-row urgent-row">
+          <input type="checkbox" id="dayTaskUrgent">
+          Imediato (destacar em vermelho)
+        </label>
+        </div>
+        <div id="dayRepeatField">
+        <label class="repeat-row">
+          <input type="checkbox" id="dayTaskRepeat">
+          Repetir toda semana neste horário
+        </label>
+        </div>
+        <div id="dayRepeatDays" class="day-chips" style="display:none;">
+          <button type="button" class="day-chip" data-day="0">D</button>
+          <button type="button" class="day-chip" data-day="1">S</button>
+          <button type="button" class="day-chip" data-day="2">T</button>
+          <button type="button" class="day-chip" data-day="3">Q</button>
+          <button type="button" class="day-chip" data-day="4">Q</button>
+          <button type="button" class="day-chip" data-day="5">S</button>
+          <button type="button" class="day-chip" data-day="6">S</button>
+        </div>
+        <div class="submit-row">
+          <button type="button" class="btn-ghost" id="dayAddCancel">Cancelar</button>
+          <button type="submit" class="btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>Adicionar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ CATEGORIA ============ -->
+  <div class="screen" id="screen-category">
+    <div class="screen-header cat-themed" id="catScreenHeader">
+      <button class="back-btn" id="catBack" aria-label="Voltar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="screen-header-title">
+        <h2 id="catTitle"><svg id="catTitleIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"></svg><span id="catTitleText">—</span></h2>
+        <div class="sh-sub" id="catSub">—</div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="stats-card" id="catStats"></div>
+
+      <ul class="task-list" id="catTaskList"></ul>
+
+      <button class="quick-add-toggle" id="catAddToggle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+        Adicionar tarefa
+      </button>
+
+      <form class="schedule-form" id="catAddForm" style="display:none;">
+        <div>
+          <span class="field-label">Título</span>
+          <input type="text" id="catTaskTitle" placeholder="Nova tarefa ou meta…" required maxlength="90">
+        </div>
+        <div id="catTypeField" style="display:none;">
+          <span class="field-label">Tipo</span>
+          <select id="catTaskType"></select>
+        </div>
+        <div>
+          <span class="field-label">Comentário (opcional)</span>
+          <input type="text" id="catTaskComment" placeholder="Anotação sobre a tarefa…" maxlength="200">
+        </div>
+        <label class="repeat-row urgent-row">
+          <input type="checkbox" id="catTaskUrgent">
+          Imediato (destacar em vermelho)
+        </label>
+        <label class="repeat-row">
+          <input type="checkbox" id="catTaskSchedule">
+          Agendar no calendário (data e horário)
+        </label>
+        <div id="catDeadlineField">
+          <span class="field-label">Prazo (opcional)</span>
+          <input type="date" id="catTaskDeadline">
+        </div>
+        <div id="catScheduleFields" style="display:none;flex-direction:column;gap:8px;">
+          <div class="row">
+            <div>
+              <span class="field-label">Horário</span>
+              <input type="time" id="catTaskTime">
+            </div>
+            <div>
+              <span class="field-label">Duração</span>
+              <select id="catTaskDuration">
+                <option value="30">30 min</option>
+                <option value="60" selected>1h</option>
+                <option value="90">1h30</option>
+                <option value="120">2h</option>
+                <option value="180">3h</option>
+                <option value="240">4h</option>
+                <option value="300">5h</option>
+                <option value="360">6h</option>
+                <option value="480">8h</option>
+                <option value="custom">Outra…</option>
+              </select>
+              <input type="number" id="catTaskDurationCustom" min="0.25" step="0.25" placeholder="Horas" style="display:none;margin-top:4px;width:100%;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:12.5px;font-family:var(--font-mono);background:var(--fill);color:var(--text);">
+            </div>
+          </div>
+          <label class="repeat-row">
+            <input type="checkbox" id="catTaskRepeat">
+            Repetir toda semana
+          </label>
+          <div id="catRepeatDays" class="day-chips" style="display:none;">
+            <button type="button" class="day-chip" data-day="0">D</button>
+            <button type="button" class="day-chip" data-day="1">S</button>
+            <button type="button" class="day-chip" data-day="2">T</button>
+            <button type="button" class="day-chip" data-day="3">Q</button>
+            <button type="button" class="day-chip" data-day="4">Q</button>
+            <button type="button" class="day-chip" data-day="5">S</button>
+            <button type="button" class="day-chip" data-day="6">S</button>
+          </div>
+          <div id="catDateField">
+            <span class="field-label">Data</span>
+            <input type="date" id="catTaskDate">
+          </div>
+        </div>
+        <div class="submit-row">
+          <button type="button" class="btn-ghost" id="catAddCancel">Cancelar</button>
+          <button type="submit" class="btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>Adicionar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ================= MODELO / PERSISTÊNCIA ================= */
+  const TASKS_KEY = "painel_tasks_v2";
+  const TRACKERS_KEY = "painel_trackers_v2";
+  const SESSIONS_KEY = "painel_sessions_v1";
+
+  const CATS = {
+    faculdade: { label:"Faculdade", color:"var(--c-faculdade)", hex:"#5FBE6C",
+      icon:'<path d="M4 6.5C4 5 5.5 4 8 4c2.5 0 4 1 4 2.5V20c0-1.5-1.5-2.5-4-2.5S4 18.5 4 20V6.5zM20 6.5C20 5 18.5 4 16 4c-2.5 0-4 1-4 2.5V20c0-1.5 1.5-2.5 4-2.5s4 1 4 2.5V6.5z"/>',
+      empty:"Nenhuma tarefa da faculdade ainda. Adicione a primeira." },
+    academia: { label:"Academia e Alimentação", color:"var(--c-academia)", hex:"#E8B454",
+      icon:'<path d="M6.5 6.5l11 11M4 9l3-3 3 3-3 3-3-3zm10 10l3-3 3 3-3 3-3-3zM8.5 15.5L2 22M15.5 8.5L22 2"/>',
+      empty:"Nenhuma meta de treino ou dieta ainda. Adicione a primeira." },
+    carreira: { label:"Carreira", color:"var(--c-carreira)", hex:"#5C8DF2",
+      icon:'<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M8 8V6a2 2 0 012-2h4a2 2 0 012 2v2"/>',
+      empty:"Nenhuma tarefa de carreira ainda. Adicione a primeira." },
+    outros: { label:"Outros", color:"var(--c-outros)", hex:"#A47CDB",
+      icon:'<circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/><circle cx="5" cy="12" r="1.6"/>',
+      empty:"Nenhuma tarefa por aqui ainda. Adicione a primeira." }
+  };
+  const DAY_LETTERS = ["D","S","T","Q","Q","S","S"];
+  const DAY_ABBR = ["dom","seg","ter","qua","qui","sex","sáb"];
+  const WEEKDAYS_LONG = ["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
+  const MONTHS = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  const TYPES = {
+    aulas:   { label:"Aulas",    parent:"faculdade" },
+    extensao:{ label:"Extensão", parent:"faculdade" },
+    treino:  { label:"Treino",   parent:"academia" },
+    cardio:  { label:"Cardio",   parent:"academia" },
+    trabalho:{ label:"Trabalho", parent:"carreira" },
+    carreira:{ label:"Carreira", parent:"carreira" }
+  };
+  const HOURLY_RATE = 18.40;
+
+  function loadJSON(key, fallback){ try{ const r=localStorage.getItem(key); return r?JSON.parse(r):fallback; }catch(e){ return fallback; } }
+  function persist(){
+    localStorage.setItem(TASKS_KEY, JSON.stringify(state.tasks));
+    localStorage.setItem(SESSIONS_KEY, JSON.stringify(state.sessions));
+    localStorage.setItem(TRACKERS_KEY, JSON.stringify({
+      dietLog: state.dietLog, workoutLog: state.workoutLog, workoutGoal: state.workoutGoal,
+      occStatus: state.occStatus, occSkips: state.occSkips
+    }));
+  }
+
+  const today = new Date();
+  const trackerData = loadJSON(TRACKERS_KEY, {});
+  const state = {
+    tasks: loadJSON(TASKS_KEY, []),
+    sessions: loadJSON(SESSIONS_KEY, []),
+    dietLog: trackerData.dietLog || {},
+    workoutLog: trackerData.workoutLog || {},
+    workoutGoal: trackerData.workoutGoal || 4,
+    occStatus: trackerData.occStatus || {},
+    occSkips: trackerData.occSkips || {},
+    weekStart: startOfWeek(today),
+    selectedDate: new Date(today.getFullYear(), today.getMonth(), today.getDate()),
+    activeCategory: null,
+    scheduleFormDays: new Set(),
+    catFormDays: new Set(),
+    calendarView: "week",
+    monthCursor: new Date(today.getFullYear(), today.getMonth(), 1),
+    dietMonthCursor: new Date(today.getFullYear(), today.getMonth(), 1),
+    statPeriod: "week",
+    dayFormKind: "normal"
+  };
+
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+  function dateKey(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+  function isSameDay(a,b){ return dateKey(a)===dateKey(b); }
+  function startOfWeek(d){ const c=new Date(d); c.setDate(c.getDate()-c.getDay()); c.setHours(0,0,0,0); return c; }
+  function addDays(d,n){ const c=new Date(d); c.setDate(c.getDate()+n); return c; }
+  function timeToFloat(t){ const [h,m]=t.split(":").map(Number); return h + m/60; }
+
+  /* ================= NAVEGAÇÃO DE TELAS ================= */
+  function showScreen(name){
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    document.getElementById("screen-"+name).classList.add("active");
+  }
+  document.getElementById("dayBack").addEventListener("click", ()=>{ showScreen("home"); renderHome(); });
+  document.getElementById("catBack").addEventListener("click", ()=>{ showScreen("home"); renderHome(); });
+
+  /* ================= OCORRÊNCIAS (TAREFAS AGENDADAS) ================= */
+  function getOccurrencesForDate(date){
+    const key = dateKey(date);
+    const weekday = date.getDay();
+    const list = [];
+    state.tasks.forEach(t => {
+      if(!t.time) return;
+      if(t.repeatDays && t.repeatDays.length){
+        if(t.repeatDays.includes(weekday) && !state.occSkips[t.id+"|"+key]){
+          list.push({ task:t, key:t.id+"|"+key, isRepeat:true,
+            time:t.time, duration:t.duration||60, title:t.text, category:t.category, type:t.type||null, comment:t.comment||"", urgent:!!t.urgent,
+            done: !!state.occStatus[t.id+"|"+key] });
+        }
+      } else if(t.date === key){
+        list.push({ task:t, key:t.id, isRepeat:false, time:t.time, duration:t.duration||60,
+          title:t.text, category:t.category, type:t.type||null, comment:t.comment||"", urgent:!!t.urgent, done: !!t.done });
+      }
+    });
+    state.sessions.forEach(s=>{
+      if(s.date !== key) return;
+      const parent = state.tasks.find(t=>t.id===s.parentId);
+      if(!parent) return;
+      list.push({ task:parent, session:s, key:"session|"+s.id, isRepeat:false, isSession:true,
+        time:s.time, duration:s.duration||60, title:parent.text, category:parent.category, type:parent.type||null,
+        comment:s.comment || parent.comment || "", urgent:!!parent.urgent, done: !!s.done });
+    });
+    return list.sort((a,b)=> a.time.localeCompare(b.time));
+  }
+  function getOccurrencesInRange(startDate,endDate){
+    const out = [];
+    let d = new Date(startDate);
+    while(d<=endDate){ out.push(...getOccurrencesForDate(d)); d = addDays(d,1); }
+    return out;
+  }
+  function startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+  function endOfMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
+
+  /* ---- comentários (balão) ---- */
+  function showCommentPopup(anchorEl, text){
+    document.querySelectorAll(".comment-popover").forEach(p=>p.remove());
+    if(!text) return;
+    const pop = document.createElement("div");
+    pop.className = "comment-popover";
+    pop.textContent = text;
+    document.body.appendChild(pop);
+    const r = anchorEl.getBoundingClientRect();
+    const pw = pop.offsetWidth, ph = pop.offsetHeight;
+    let left = r.left + r.width/2 - pw/2;
+    left = Math.max(8, Math.min(left, window.innerWidth-pw-8));
+    let top = r.top - ph - 10;
+    if(top<8){ top = r.bottom + 10; pop.classList.add("below"); }
+    pop.style.left = left+"px";
+    pop.style.top = top+"px";
+    const closeIt = (e)=>{ if(!pop.contains(e.target) && e.target!==anchorEl){ pop.remove(); document.removeEventListener("click",closeIt,true); } };
+    setTimeout(()=> document.addEventListener("click", closeIt, true), 0);
+  }
+  function makeCommentMark(comment){
+    if(!comment) return null;
+    const mark = document.createElement("span");
+    mark.className = "comment-mark";
+    mark.textContent = "*";
+    mark.title = "Ver comentário";
+    mark.addEventListener("click",(e)=>{ e.stopPropagation(); showCommentPopup(mark, comment); });
+    return mark;
+  }
+  function toggleOccurrence(occ){
+    if(occ.isSession){ occ.session.done = !occ.session.done; }
+    else if(occ.isRepeat){ state.occStatus[occ.key] = !occ.done; }
+    else { occ.task.done = !occ.task.done; }
+    persist();
+  }
+  function deleteOccurrence(occ){
+    if(occ.isSession){ state.sessions = state.sessions.filter(s=>s.id!==occ.session.id); }
+    else if(occ.isRepeat){ state.occSkips[occ.key] = true; }
+    else { state.tasks = state.tasks.filter(t=>t.id!==occ.task.id); }
+    persist();
+  }
+
+  /* ================= HEADER (HOME) ================= */
+  function renderHeader(){
+    const h = today.getHours();
+    const greet = h<12 ? "Bom dia" : (h<18 ? "Boa tarde" : "Boa noite");
+    document.getElementById("greeting").textContent = greet;
+    document.getElementById("headerDate").textContent = today.getDate() + " de " + MONTHS[today.getMonth()];
+  }
+
+  /* ================= CALENDÁRIO DA SEMANA (HOME) ================= */
+  document.getElementById("prevWeek").addEventListener("click", ()=>{ state.weekStart = addDays(state.weekStart,-7); renderWeek(); });
+  document.getElementById("nextWeek").addEventListener("click", ()=>{ state.weekStart = addDays(state.weekStart,7); renderWeek(); });
+
+  function layoutOverlaps(events){
+    const sorted = events.slice().sort((a,b)=>a.start-b.start);
+    const clusters = [];
+    let current = [], clusterEnd = -Infinity;
+    sorted.forEach(ev=>{
+      if(current.length && ev.start >= clusterEnd){ clusters.push(current); current = []; clusterEnd = -Infinity; }
+      current.push(ev);
+      clusterEnd = Math.max(clusterEnd, ev.end);
+    });
+    if(current.length) clusters.push(current);
+    clusters.forEach(cluster=>{
+      const colEnds = [];
+      cluster.forEach(ev=>{
+        let placed = false;
+        for(let c=0;c<colEnds.length;c++){
+          if(colEnds[c] <= ev.start){ ev.col = c; colEnds[c] = ev.end; placed = true; break; }
+        }
+        if(!placed){ ev.col = colEnds.length; colEnds.push(ev.end); }
+      });
+      cluster.forEach(ev=> ev.cols = colEnds.length);
+    });
+    return sorted;
+  }
+
+  function renderWeek(){
+    const start = state.weekStart, end = addDays(start,6);
+    const sameMonth = start.getMonth()===end.getMonth();
+    document.getElementById("weekLabel").textContent =
+      start.getDate() + (sameMonth?"":" "+MONTHS[start.getMonth()].slice(0,3)) + "–" + end.getDate() + " " + MONTHS[end.getMonth()].slice(0,3);
+
+    const grid = document.getElementById("weekGrid");
+    grid.innerHTML = "";
+    const STRIP_START=6, STRIP_END=23, STRIP_HEIGHT=260;
+    const pxPerHour = STRIP_HEIGHT/(STRIP_END-STRIP_START);
+
+    /* ---- coluna do eixo de horários (esquerda) ---- */
+    const axisCol = document.createElement("div");
+    axisCol.className = "week-axis-col";
+    const axisHead = document.createElement("div");
+    axisHead.className = "week-day-head";
+    axisHead.style.visibility = "hidden";
+    axisHead.innerHTML = '<div class="wd-letter">D</div><div class="wd-num">00</div>';
+    const axis = document.createElement("div");
+    axis.className = "week-hour-axis";
+    axis.style.height = STRIP_HEIGHT+"px";
+    for(let hr=STRIP_START; hr<=STRIP_END; hr+=3){
+      const lbl = document.createElement("div");
+      lbl.className = "week-hour-label";
+      lbl.style.top = ((hr-STRIP_START)*pxPerHour)+"px";
+      lbl.textContent = hr+"h";
+      axis.appendChild(lbl);
+    }
+    const axisTotal = document.createElement("div");
+    axisTotal.className = "week-total";
+    axisTotal.style.visibility = "hidden";
+    axisTotal.textContent = "0x";
+    axisCol.append(axisHead, axis, axisTotal);
+    grid.appendChild(axisCol);
+
+    for(let i=0;i<7;i++){
+      const d = addDays(start,i);
+      const occs = getOccurrencesForDate(d);
+      const btn = document.createElement("button");
+      btn.className = "week-day" + (isSameDay(d,today)?" today":"");
+      const isSelected = isSameDay(d, state.selectedDate);
+
+      const head = document.createElement("div");
+      head.className = "week-day-head";
+      head.innerHTML = '<div class="wd-letter">'+DAY_LETTERS[d.getDay()]+'</div><div class="wd-num">'+d.getDate()+'</div>';
+
+      const strip = document.createElement("div");
+      strip.className = "week-day-strip";
+      strip.style.height = STRIP_HEIGHT+"px";
+      strip.style.backgroundImage = "repeating-linear-gradient(to bottom, transparent, transparent "+(pxPerHour-1)+"px, var(--line) "+(pxPerHour-1)+"px, var(--line) "+pxPerHour+"px)";
+      if(isSelected) strip.style.borderColor = "var(--marigold-dark)";
+
+      const events = occs.map(o=>{
+        const t = timeToFloat(o.time);
+        const dur = Math.max(o.duration/60, (STRIP_END-STRIP_START)*0.045);
+        return { o, start:t, end:t+dur };
+      });
+      layoutOverlaps(events).forEach(ev=>{
+        const topPct = Math.min(1,Math.max(0,(ev.start-STRIP_START)/(STRIP_END-STRIP_START)));
+        const hPct = Math.max(0.045,(ev.end-ev.start)/(STRIP_END-STRIP_START));
+        const bar = document.createElement("div");
+        bar.className = "week-bar" + (ev.o.urgent ? " urgent" : "");
+        bar.style.top = (topPct*STRIP_HEIGHT)+"px";
+        bar.style.height = Math.min(STRIP_HEIGHT-2,(hPct*STRIP_HEIGHT))+"px";
+        bar.style.left = "calc(" + ((ev.col/ev.cols)*100) + "% + 1px)";
+        bar.style.width = "calc(" + (100/ev.cols) + "% - 2px)";
+        if(!ev.o.urgent) bar.style.background = CATS[ev.o.category].hex;
+        if(ev.o.done) bar.style.opacity = "0.35";
+        if(ev.o.comment){
+          const mark = document.createElement("span");
+          mark.className = "bar-comment-mark";
+          mark.textContent = "*";
+          mark.title = "Ver comentário";
+          mark.addEventListener("click",(e)=>{ e.stopPropagation(); showCommentPopup(mark, ev.o.comment); });
+          bar.appendChild(mark);
+        }
+        strip.appendChild(bar);
+      });
+
+      const total = document.createElement("div");
+      total.className = "week-total";
+      total.textContent = occs.length ? occs.length+"x" : "";
+
+      btn.append(head, strip, total);
+      btn.addEventListener("click", ()=> openDay(d));
+      grid.appendChild(btn);
+    }
+  }
+
+  /* ================= VISÃO MENSAL (HOME) ================= */
+  function setCalendarView(view){
+    state.calendarView = view;
+    document.getElementById("weekGrid").style.display = view==="week" ? "grid" : "none";
+    document.getElementById("monthGrid").classList.toggle("active", view==="month");
+    document.getElementById("calViewToggle").textContent = view==="week" ? "Mês" : "Semana";
+    if(view==="month") renderMonth();
+  }
+  document.getElementById("calViewToggle").addEventListener("click", ()=>{
+    if(state.calendarView==="week"){
+      state.monthCursor = new Date(state.weekStart.getFullYear(), state.weekStart.getMonth(), 1);
+      setCalendarView("month");
+    } else {
+      setCalendarView("week");
+    }
+  });
+  document.getElementById("prevMonth").addEventListener("click", ()=>{
+    state.monthCursor = new Date(state.monthCursor.getFullYear(), state.monthCursor.getMonth()-1, 1); renderMonth();
+  });
+  document.getElementById("nextMonth").addEventListener("click", ()=>{
+    state.monthCursor = new Date(state.monthCursor.getFullYear(), state.monthCursor.getMonth()+1, 1); renderMonth();
+  });
+
+  function renderMonth(){
+    const cursor = state.monthCursor;
+    document.getElementById("monthLabel").textContent = MONTHS[cursor.getMonth()] + " de " + cursor.getFullYear();
+    const cells = document.getElementById("monthCells");
+    cells.innerHTML = "";
+    const firstOfMonth = startOfMonth(cursor);
+    const gridStart = startOfWeek(firstOfMonth);
+    const selWeekStart = state.weekStart, selWeekEnd = addDays(selWeekStart,6);
+    for(let i=0;i<42;i++){
+      const d = addDays(gridStart,i);
+      const occs = getOccurrencesForDate(d);
+      const cats = [...new Set(occs.map(o=>o.category))];
+      const cell = document.createElement("button");
+      cell.className = "month-cell"
+        + (d.getMonth()!==cursor.getMonth() ? " outside" : "")
+        + (isSameDay(d,today) ? " today" : "")
+        + (d>=selWeekStart && d<=selWeekEnd ? " selected-week" : "");
+      cell.innerHTML = '<span>'+d.getDate()+'</span><span class="m-dots">'+
+        cats.slice(0,4).map(c=>'<span class="m-dot" style="background:'+CATS[c].hex+'"></span>').join("")+'</span>';
+      cell.addEventListener("click", ()=>{
+        state.weekStart = startOfWeek(d);
+        state.selectedDate = new Date(d);
+        setCalendarView("week");
+        renderWeek();
+      });
+      cells.appendChild(cell);
+      if(i>=34 && d.getMonth()!==cursor.getMonth() && (i+1)%7===0) { /* trims trailing extra row visually via CSS if needed */ }
+    }
+  }
+
+
+  function renderHomeCatCards(){
+    const wrap = document.getElementById("homeCatCards");
+    wrap.innerHTML = "";
+    Object.keys(CATS).forEach(catKey=>{
+      const cat = CATS[catKey];
+      const tasks = state.tasks.filter(t=>t.category===catKey);
+      const done = tasks.filter(t=>{
+        if(t.repeatDays && t.repeatDays.length) return false;
+        return t.done;
+      }).length;
+      const btn = document.createElement("button");
+      btn.className = "cat-card";
+      btn.style.setProperty("--cat-color", cat.hex);
+      btn.innerHTML =
+        '<span class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">'+cat.icon+'</svg></span>'+
+        '<span class="cat-body"><span class="cat-name">'+cat.label+'</span></span>'+
+        '<span class="cat-count">'+done+"/"+tasks.length+'</span>';
+      btn.addEventListener("click", ()=> openCategory(catKey));
+      wrap.appendChild(btn);
+    });
+  }
+
+  function renderHome(){ renderHeader(); renderWeek(); renderHomeCatCards(); if(state.calendarView==="month") renderMonth(); }
+
+  /* ================= TELA DO DIA ================= */
+  function openDay(date){
+    state.selectedDate = date;
+    showScreen("day");
+    renderDay();
+  }
+  document.getElementById("dayPrev").addEventListener("click", ()=>{ state.selectedDate=addDays(state.selectedDate,-1); renderDay(); });
+  document.getElementById("dayNext").addEventListener("click", ()=>{ state.selectedDate=addDays(state.selectedDate,1); renderDay(); });
+
+  function openAddAtTime(hourFloat){
+    const totalMinutes = Math.max(0, Math.min(23*60+45, Math.round(hourFloat*60/15)*15));
+    const hh = Math.floor(totalMinutes/60), mm = totalMinutes%60;
+    const timeStr = String(hh).padStart(2,"0")+":"+String(mm).padStart(2,"0");
+    document.getElementById("dayAddToggle").style.display = "none";
+    document.getElementById("dayAddForm").style.display = "flex";
+    setDayFormKind("normal");
+    document.getElementById("dayTaskTime").value = timeStr;
+    document.getElementById("dayTaskTitle").focus();
+  }
+
+  function renderDay(){
+    const d = state.selectedDate;
+    document.getElementById("dayLabel").textContent =
+      (isSameDay(d,today)?"Hoje · ":"") + WEEKDAYS_LONG[d.getDay()] + ", " + d.getDate() + " de " + MONTHS[d.getMonth()];
+
+    const occs = getOccurrencesForDate(d);
+    let startHour = 5, endHour = 23;
+    occs.forEach(o=>{
+      const s = Math.floor(timeToFloat(o.time));
+      const e = Math.ceil(timeToFloat(o.time) + o.duration/60);
+      if(s<startHour) startHour = Math.max(0,s);
+      if(e>endHour) endHour = Math.min(23,e);
+    });
+
+    const HOUR_H = 60;
+    const timeline = document.getElementById("dayTimeline");
+    timeline.innerHTML = "";
+    const isToday = isSameDay(d,today);
+    const nowHour = today.getHours();
+    let scrollTarget = null;
+
+    for(let h=startHour; h<=endHour; h++){
+      const row = document.createElement("div");
+      row.className = "day-hour-row" + (isToday && h===nowHour ? " current-hour" : "");
+      row.innerHTML = '<div class="day-hour-label">'+h+':00</div>';
+      row.addEventListener("click", ()=> openAddAtTime(h));
+      if(isToday && h===nowHour) scrollTarget = row;
+      timeline.appendChild(row);
+    }
+
+    const layer = document.createElement("div");
+    layer.className = "day-events-layer";
+    timeline.style.position = "relative";
+    timeline.appendChild(layer);
+    layer.addEventListener("click", (e)=>{
+      if(e.target !== layer) return;
+      const rect = layer.getBoundingClientRect();
+      const hourFloat = startHour + (e.clientY - rect.top)/HOUR_H;
+      openAddAtTime(hourFloat);
+    });
+
+    occs.forEach(o=>{
+      const t = timeToFloat(o.time);
+      const dur = Math.max(o.duration/60, 0.5);
+      o.__start = t; o.__end = t+dur;
+    });
+    layoutOverlaps(occs.map(o=>({o, start:o.__start, end:o.__end}))).forEach(ev=>{
+      const o = ev.o;
+      const top = (ev.start - startHour) * HOUR_H;
+      const h = Math.max(30,(ev.end-ev.start) * HOUR_H - 3);
+      const block = document.createElement("div");
+      block.className = "day-event-block" + (o.done ? " done" : "") + (o.urgent ? " urgent" : "");
+      block.style.top = top+"px";
+      block.style.height = h+"px";
+      block.style.left = "calc(" + ((ev.col/ev.cols)*100) + "% + 2px)";
+      block.style.width = "calc(" + (100/ev.cols) + "% - 4px)";
+      if(!o.urgent) block.style.background = CATS[o.category].hex;
+      block.innerHTML =
+        '<div class="de-time">'+o.time+(o.isRepeat?' ↻':'')+(o.isSession?' ⏱':'')+(o.urgent?' ⚡':'')+'</div><div class="de-title"></div>'+
+        '<div class="day-event-actions">'+
+          '<button class="de-btn" data-act="toggle" aria-label="Concluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M4 12l6 6L20 6"/></svg></button>'+
+          '<button class="de-btn" data-act="del" aria-label="Excluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M5 5l14 14M19 5L5 19"/></svg></button>'+
+        '</div>';
+      block.querySelector(".de-title").textContent = o.title;
+      if(o.comment){
+        const mark = makeCommentMark(o.comment);
+        mark.style.color = "#fff";
+        block.querySelector(".de-title").appendChild(mark);
+      }
+      block.querySelector('[data-act="toggle"]').addEventListener("click",(e)=>{ e.stopPropagation(); toggleOccurrence(o); renderDay(); renderHome(); });
+      block.querySelector('[data-act="del"]').addEventListener("click",(e)=>{ e.stopPropagation(); deleteOccurrence(o); renderDay(); renderHome(); });
+      layer.appendChild(block);
+    });
+
+    if(occs.length===0){
+      const empty = document.createElement("p");
+      empty.className = "empty-state";
+      empty.style.margin = "10px";
+      empty.textContent = "Nada agendado para este dia ainda.";
+      layer.appendChild(empty);
+    }
+
+    document.getElementById("dayAddForm").style.display = "none";
+    document.getElementById("dayAddToggle").style.display = "flex";
+
+    if(scrollTarget){
+      requestAnimationFrame(()=>{ document.querySelector(".day-timeline-wrap").scrollTop = Math.max(0, scrollTarget.offsetTop - 10); });
+    }
+  }
+
+  function typesForCategory(catKey){
+    return Object.keys(TYPES).filter(k=>TYPES[k].parent===catKey);
+  }
+  function fillTypeSelect(sel, catKey){
+    sel.innerHTML = "";
+    typesForCategory(catKey).forEach(k=>{
+      const opt = document.createElement("option");
+      opt.value = k; opt.textContent = TYPES[k].label;
+      sel.appendChild(opt);
+    });
+  }
+
+  document.getElementById("dayTaskCategory").addEventListener("change", function(){
+    const types = typesForCategory(this.value);
+    document.getElementById("dayTypeField").style.display = types.length ? "block" : "none";
+    if(types.length) fillTypeSelect(document.getElementById("dayTaskType"), this.value);
+  });
+  document.getElementById("dayTaskDuration").addEventListener("change", function(){
+    document.getElementById("dayTaskDurationCustom").style.display = this.value==="custom" ? "block" : "none";
+  });
+  function resolveDuration(selectEl, customEl){
+    if(selectEl.value==="custom"){
+      const h = parseFloat(customEl.value);
+      return h>0 ? Math.round(h*60) : 60;
+    }
+    return parseInt(selectEl.value,10);
+  }
+
+  function setDayFormKind(kind){
+    state.dayFormKind = kind;
+    document.querySelectorAll("#dayKindToggle button").forEach(b=> b.classList.toggle("active", b.dataset.kind===kind));
+    const isSession = kind==="session";
+    document.getElementById("daySessionField").style.display = isSession ? "block" : "none";
+    document.getElementById("dayTitleField").style.display = isSession ? "none" : "block";
+    document.getElementById("dayCategoryField").style.display = isSession ? "none" : "block";
+    document.getElementById("dayUrgentField").style.display = isSession ? "none" : "block";
+    document.getElementById("dayRepeatField").style.display = isSession ? "none" : "block";
+    if(isSession){
+      document.getElementById("dayRepeatDays").style.display = "none";
+      document.getElementById("dayTypeField").style.display = "none";
+      populateParentTaskSelect();
+    }
+  }
+  function populateParentTaskSelect(){
+    const sel = document.getElementById("dayTaskParent");
+    const deadlineTasks = state.tasks.filter(t=> !t.time && !(t.repeatDays && t.repeatDays.length));
+    sel.innerHTML = "";
+    if(!deadlineTasks.length){
+      sel.innerHTML = '<option value="">Nenhuma tarefa com prazo cadastrada</option>';
+      return;
+    }
+    deadlineTasks.forEach(t=>{
+      const opt = document.createElement("option");
+      opt.value = t.id;
+      const deadlineStr = t.deadline ? " (prazo "+t.deadline.split("-").slice(1).reverse().join("/")+")" : "";
+      opt.textContent = CATS[t.category].label + " · " + t.text + deadlineStr;
+      sel.appendChild(opt);
+    });
+  }
+  document.getElementById("dayKindToggle").addEventListener("click",(e)=>{
+    const b = e.target.closest("button"); if(!b) return;
+    setDayFormKind(b.dataset.kind);
+  });
+
+  document.getElementById("dayAddToggle").addEventListener("click", ()=>{
+    document.getElementById("dayAddToggle").style.display="none";
+    document.getElementById("dayAddForm").style.display="flex";
+    setDayFormKind("normal");
+  });
+  document.getElementById("dayAddCancel").addEventListener("click", ()=>{
+    document.getElementById("dayAddForm").style.display="none";
+    document.getElementById("dayAddForm").reset();
+    document.getElementById("dayAddToggle").style.display="flex";
+    document.getElementById("dayRepeatDays").style.display="none";
+    state.scheduleFormDays.clear();
+    setDayFormKind("normal");
+    document.querySelectorAll("#dayRepeatDays .day-chip.active").forEach(c=>c.classList.remove("active"));
+  });
+  document.getElementById("dayTaskRepeat").addEventListener("change", function(){
+    document.getElementById("dayRepeatDays").style.display = this.checked ? "flex" : "none";
+  });
+  document.getElementById("dayRepeatDays").addEventListener("click", (e)=>{
+    const chip = e.target.closest(".day-chip"); if(!chip) return;
+    const day = parseInt(chip.dataset.day,10);
+    if(state.scheduleFormDays.has(day)){ state.scheduleFormDays.delete(day); chip.classList.remove("active"); }
+    else { state.scheduleFormDays.add(day); chip.classList.add("active"); }
+  });
+  document.getElementById("dayAddForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    const time = document.getElementById("dayTaskTime").value;
+    const duration = resolveDuration(document.getElementById("dayTaskDuration"), document.getElementById("dayTaskDurationCustom"));
+    const comment = document.getElementById("dayTaskComment").value.trim();
+    if(!time) return;
+
+    if(state.dayFormKind === "session"){
+      const parentId = document.getElementById("dayTaskParent").value;
+      if(!parentId){ alert("Escolha uma tarefa com prazo para criar a sessão."); return; }
+      state.sessions.push({ id: uid(), parentId, date: dateKey(state.selectedDate), time, duration, done:false, comment });
+      persist();
+      this.reset();
+      setDayFormKind("normal");
+      renderDay(); renderHome();
+      return;
+    }
+
+    const title = document.getElementById("dayTaskTitle").value.trim();
+    const category = document.getElementById("dayTaskCategory").value;
+    const types = typesForCategory(category);
+    const type = types.length ? document.getElementById("dayTaskType").value : null;
+    const urgent = document.getElementById("dayTaskUrgent").checked;
+    const repeat = document.getElementById("dayTaskRepeat").checked;
+    if(!title){ alert("Informe um título para a tarefa."); return; }
+    const repeatDays = repeat ? Array.from(state.scheduleFormDays).sort() : null;
+    if(repeat && (!repeatDays || repeatDays.length===0)){ alert("Selecione ao menos um dia para a repetição."); return; }
+    state.tasks.push({
+      id: uid(), text: title, category, type, comment, urgent, done:false, time, duration,
+      date: repeat ? null : dateKey(state.selectedDate),
+      repeatDays: repeat ? repeatDays : null
+    });
+    persist();
+    this.reset();
+    document.getElementById("dayTypeField").style.display = "none";
+    document.getElementById("dayTaskDurationCustom").style.display = "none";
+    state.scheduleFormDays.clear();
+    document.getElementById("dayRepeatDays").style.display="none";
+    document.querySelectorAll("#dayRepeatDays .day-chip.active").forEach(c=>c.classList.remove("active"));
+    setDayFormKind("normal");
+    renderDay(); renderHome();
+  });
+
+  /* ================= TELA DE CATEGORIA ================= */
+  function openCategory(catKey){
+    state.activeCategory = catKey;
+    const cat = CATS[catKey];
+    document.getElementById("catScreenHeader").style.setProperty("--cat-color", cat.hex);
+    document.getElementById("catTitleIcon").innerHTML = cat.icon;
+    document.getElementById("catTitleText").textContent = cat.label;
+    document.getElementById("catAddForm").style.display="none";
+    document.getElementById("catAddToggle").style.display="flex";
+    const types = typesForCategory(catKey);
+    document.getElementById("catTypeField").style.display = types.length ? "block" : "none";
+    if(types.length) fillTypeSelect(document.getElementById("catTaskType"), catKey);
+    state.statPeriod = "week";
+    showScreen("category");
+    renderCategory();
+  }
+
+  function renderCategory(){
+    const catKey = state.activeCategory;
+    const cat = CATS[catKey];
+    const tasks = state.tasks.filter(t=>t.category===catKey);
+    document.getElementById("catSub").textContent = tasks.length + " tarefa" + (tasks.length!==1?"s":"") + " nesta área";
+
+    renderCatStats(catKey);
+
+    const list = document.getElementById("catTaskList");
+    list.innerHTML = "";
+    if(tasks.length===0){
+      const li = document.createElement("li");
+      li.className = "empty-state";
+      li.textContent = cat.empty;
+      list.appendChild(li);
+    } else {
+      tasks.forEach(t=>{
+        const isRepeat = t.repeatDays && t.repeatDays.length;
+        const li = document.createElement("li");
+        li.className = "task-item" + (!isRepeat && t.done ? " done" : "") + (t.urgent ? " urgent" : "");
+
+        const check = document.createElement("button");
+        check.className = "stamp-check" + ((isRepeat ? t.active!==false : t.done) ? " checked" : "");
+        check.setAttribute("aria-label", isRepeat ? "Ativar/pausar rotina" : "Marcar como concluído");
+        check.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg>';
+        check.addEventListener("click", ()=>{
+          if(isRepeat){ t.active = t.active===false ? true : false; }
+          else { t.done = !t.done; }
+          persist(); renderCategory(); renderHome();
+        });
+
+        const body = document.createElement("div");
+        body.className = "task-body";
+        const titleEl = document.createElement("span");
+        titleEl.className = "task-title";
+        if(t.urgent){
+          const utag = document.createElement("span");
+          utag.className = "urgent-tag";
+          utag.textContent = "Imediato";
+          titleEl.appendChild(utag);
+        }
+        if(t.type && TYPES[t.type]){
+          const tag = document.createElement("span");
+          tag.className = "task-type-tag";
+          tag.textContent = TYPES[t.type].label;
+          titleEl.appendChild(tag);
+        }
+        titleEl.appendChild(document.createTextNode(t.text));
+        if(t.comment){ titleEl.appendChild(makeCommentMark(t.comment)); }
+        body.appendChild(titleEl);
+        if(t.time){
+          const meta = document.createElement("span");
+          meta.className = "task-meta";
+          meta.textContent = isRepeat ? (t.repeatDays.slice().sort().map(d=>DAY_ABBR[d]).join(", ")+" · "+t.time)
+            : ("agendado · "+t.date+" · "+t.time);
+          body.appendChild(meta);
+        } else {
+          const parts = [];
+          if(t.deadline){
+            const [yy,mm,dd] = t.deadline.split("-");
+            parts.push("prazo " + dd+"/"+mm);
+          }
+          const sessCount = state.sessions.filter(s=>s.parentId===t.id).length;
+          if(sessCount) parts.push(sessCount+" sessão"+(sessCount>1?"ões":"")+" agendada"+(sessCount>1?"s":""));
+          if(parts.length){
+            const meta = document.createElement("span");
+            meta.className = "task-meta";
+            meta.textContent = parts.join(" · ");
+            body.appendChild(meta);
+          }
+        }
+
+        const actions = document.createElement("div");
+        actions.className = "task-actions";
+        const commentBtn = document.createElement("button");
+        commentBtn.className = "icon-btn";
+        commentBtn.title = t.comment ? "Editar comentário" : "Adicionar comentário";
+        commentBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>';
+        commentBtn.addEventListener("click", ()=>{
+          const v = prompt("Comentário da tarefa:", t.comment || "");
+          if(v===null) return;
+          t.comment = v.trim();
+          persist(); renderCategory(); renderHome();
+        });
+        const urgentBtn = document.createElement("button");
+        urgentBtn.className = "icon-btn";
+        urgentBtn.title = t.urgent ? "Remover modo imediato" : "Marcar como imediato";
+        urgentBtn.style.color = t.urgent ? "var(--urgent-color)" : "";
+        urgentBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="'+(t.urgent?'currentColor':'none')+'" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>';
+        urgentBtn.addEventListener("click", ()=>{
+          t.urgent = !t.urgent;
+          persist(); renderCategory(); renderHome();
+        });
+        const move = document.createElement("select");
+        move.className = "task-move";
+        move.setAttribute("aria-label","Mudar categoria");
+        Object.keys(CATS).forEach(k=>{
+          const opt = document.createElement("option");
+          opt.value = k; opt.textContent = CATS[k].label;
+          if(k===catKey) opt.selected = true;
+          move.appendChild(opt);
+        });
+        move.addEventListener("change", function(){
+          t.category = this.value;
+          if(!TYPES[t.type] || TYPES[t.type].parent!==this.value) t.type = null;
+          persist(); renderCategory(); renderHome();
+        });
+        const del = document.createElement("button");
+        del.className = "icon-btn";
+        del.setAttribute("aria-label","Excluir tarefa");
+        del.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2m2 0-1 13a2 2 0 01-2 2H9a2 2 0 01-2-2L6 7"/></svg>';
+        del.addEventListener("click", ()=>{
+          const sessCount = state.sessions.filter(s=>s.parentId===t.id).length;
+          if(sessCount>0 && !confirm("Esta tarefa tem "+sessCount+" sessão(ões) agendada(s) no calendário. Excluir mesmo assim?")) return;
+          state.tasks = state.tasks.filter(x=>x.id!==t.id);
+          state.sessions = state.sessions.filter(s=>s.parentId!==t.id);
+          persist(); renderCategory(); renderHome();
+        });
+        actions.append(commentBtn, urgentBtn, move, del);
+
+        li.append(check, body, actions);
+        list.appendChild(li);
+      });
+    }
+  }
+
+  function renderCatStats(catKey){
+    const box = document.getElementById("catStats");
+    box.innerHTML = "";
+
+    if(catKey === "academia" || catKey === "carreira" || catKey === "faculdade"){
+      const toggle = document.createElement("div");
+      toggle.className = "stat-period-toggle";
+      const toggleBtn = document.createElement("button");
+      toggleBtn.type = "button";
+      toggleBtn.className = "active";
+      toggleBtn.textContent = state.statPeriod === "week" ? "Mês" : "Semana";
+      toggleBtn.addEventListener("click", ()=>{
+        state.statPeriod = state.statPeriod === "week" ? "month" : "week";
+        renderCatStats(catKey);
+      });
+      toggle.appendChild(toggleBtn);
+      box.appendChild(toggle);
+
+      const rangeStart = state.statPeriod==="week" ? startOfWeek(today) : startOfMonth(today);
+      const rangeEnd = state.statPeriod==="week" ? addDays(rangeStart,6) : endOfMonth(today);
+      const rangeDays = Math.round((rangeEnd-rangeStart)/86400000)+1;
+      const occs = getOccurrencesInRange(rangeStart, rangeEnd).filter(o=>o.category===catKey);
+
+      function fracCard(label, done, total){
+        return '<div class="stat-frac-card"><div class="sf-label">'+label+'</div><div class="sf-value">'+done+"/"+total+'</div></div>';
+      }
+
+      if(catKey === "academia"){
+        let seguiu = 0;
+        let cur = new Date(rangeStart);
+        for(let i=0;i<rangeDays;i++){ if(state.dietLog[dateKey(cur)]==="seguiu") seguiu++; cur = addDays(cur,1); }
+        const treinoOccs = occs.filter(o=>o.type==="treino");
+        const cardioOccs = occs.filter(o=>o.type==="cardio");
+        const row = document.createElement("div");
+        row.className = "stat-frac-row";
+        row.innerHTML =
+          fracCard("Dieta", seguiu, rangeDays) +
+          fracCard("Treino", treinoOccs.filter(o=>o.done).length, treinoOccs.length) +
+          fracCard("Cardio", cardioOccs.filter(o=>o.done).length, cardioOccs.length);
+        box.appendChild(row);
+      } else if(catKey === "faculdade"){
+        function hoursByDay(start, days){
+          const arr = [];
+          let cur = new Date(start);
+          for(let i=0;i<days;i++){
+            const dOccs = getOccurrencesForDate(cur).filter(o=>o.category==="faculdade" && o.type==="extensao" && o.done);
+            const hrs = dOccs.reduce((sum,o)=> sum + (o.duration||60), 0) / 60;
+            arr.push({ date:new Date(cur), hours:hrs });
+            cur = addDays(cur,1);
+          }
+          return arr;
+        }
+        const chartTitle = document.createElement("div");
+        chartTitle.className = "diet-row-title";
+        chartTitle.textContent = "Horas de extensão — " + (state.statPeriod==="week" ? "esta semana" : MONTHS[today.getMonth()]);
+        box.appendChild(chartTitle);
+
+        const data = state.statPeriod==="week"
+          ? hoursByDay(rangeStart, 7)
+          : hoursByDay(startOfMonth(today), endOfMonth(today).getDate());
+        const maxH = Math.max(1, ...data.map(d=>d.hours));
+        const chart = document.createElement("div");
+        chart.className = "hours-chart" + (state.statPeriod==="month" ? " month" : "");
+        data.forEach(d=>{
+          const wrap = document.createElement("div");
+          wrap.className = "hc-bar-wrap" + (state.statPeriod==="month" ? " month" : "");
+          const bar = document.createElement("div");
+          bar.className = "hc-bar";
+          bar.style.height = Math.max(2,(d.hours/maxH)*100) + "%";
+          if(isSameDay(d.date,today)) bar.style.background = "var(--marigold-dark)";
+          bar.title = d.date.getDate()+"/"+(d.date.getMonth()+1)+" — "+d.hours.toLocaleString("pt-BR",{maximumFractionDigits:1})+"h";
+          const label = document.createElement("div");
+          label.className = "hc-label";
+          label.textContent = state.statPeriod==="week" ? DAY_LETTERS[d.date.getDay()] : (d.date.getDate()%5===1 || d.date.getDate()===endOfMonth(today).getDate() ? d.date.getDate() : "");
+          wrap.append(bar,label);
+          chart.appendChild(wrap);
+        });
+        box.appendChild(chart);
+
+        function extensaoHours(start,end){
+          const list = getOccurrencesInRange(start,end).filter(o=>o.category==="faculdade" && o.type==="extensao" && o.done);
+          return list.reduce((sum,o)=> sum + (o.duration||60), 0) / 60;
+        }
+        const weekHours = extensaoHours(startOfWeek(today), addDays(startOfWeek(today),6));
+        const monthHours = extensaoHours(startOfMonth(today), endOfMonth(today));
+        const hoursRow = document.createElement("div");
+        hoursRow.className = "stat-frac-row";
+        hoursRow.innerHTML =
+          '<div class="stat-frac-card"><div class="sf-label">Extensão — semana</div><div class="sf-value">'+weekHours.toLocaleString("pt-BR",{maximumFractionDigits:1})+'h</div></div>'+
+          '<div class="stat-frac-card"><div class="sf-label">Extensão — mês</div><div class="sf-value">'+monthHours.toLocaleString("pt-BR",{maximumFractionDigits:1})+'h</div></div>';
+        box.appendChild(hoursRow);
+      } else {
+        const trabOccs = occs.filter(o=>o.type==="trabalho");
+        const carrOccs = occs.filter(o=>o.type==="carreira");
+        const row = document.createElement("div");
+        row.className = "stat-frac-row";
+        row.innerHTML =
+          fracCard("Trabalho", trabOccs.filter(o=>o.done).length, trabOccs.length) +
+          fracCard("Carreira", carrOccs.filter(o=>o.done).length, carrOccs.length);
+        box.appendChild(row);
+
+        const monthOccs = getOccurrencesInRange(startOfMonth(today), endOfMonth(today))
+          .filter(o=>o.category==="carreira" && o.type==="trabalho" && o.done);
+        const minutes = monthOccs.reduce((sum,o)=> sum + (o.duration||60), 0);
+        const hours = minutes/60;
+        const value = hours * HOURLY_RATE;
+        const money = document.createElement("div");
+        money.className = "career-money-card";
+        money.innerHTML =
+          '<div class="cm-label">Ganhos com trabalho — '+MONTHS[today.getMonth()]+'</div>'+
+          '<div class="cm-value">R$ '+value.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})+'</div>'+
+          '<div class="cm-sub">'+hours.toLocaleString("pt-BR",{maximumFractionDigits:1})+'h concluídas × R$ '+HOURLY_RATE.toFixed(2).replace(".",",")+'/h</div>';
+        box.appendChild(money);
+      }
+    }
+
+    if(catKey === "academia"){
+      const CYCLE = [null,"seguiu","pouco","muito"];
+      function cycleDiet(key){
+        const idx = CYCLE.indexOf(state.dietLog[key] || null);
+        const next = CYCLE[(idx+1)%CYCLE.length];
+        if(next===null) delete state.dietLog[key]; else state.dietLog[key] = next;
+        persist(); renderCatStats(catKey);
+      }
+      function dayBand(date,type){
+        const occs = getOccurrencesForDate(date).filter(o=>o.category==="academia" && o.type===type);
+        if(!occs.length) return "";
+        return occs.some(o=>o.done) ? "on" : "pending";
+      }
+      function buildStatusCell(date, monthMode, outsideMonth){
+        const key = dateKey(date);
+        const cell = document.createElement("div");
+        cell.className = "day-status-cell" + (monthMode?" month":"") + (isSameDay(date,today)?" today":"") + (outsideMonth?" outside":"");
+        const cardio = document.createElement("button");
+        cardio.type = "button";
+        cardio.className = "ds-third ds-cardio " + dayBand(date,"cardio");
+        cardio.title = "Cardio — "+key;
+        cardio.addEventListener("click",()=> openDay(date));
+        const treino = document.createElement("button");
+        treino.type = "button";
+        treino.className = "ds-third ds-treino " + dayBand(date,"treino");
+        treino.title = "Treino — "+key;
+        treino.addEventListener("click",()=> openDay(date));
+        const dieta = document.createElement("button");
+        dieta.type = "button";
+        dieta.className = "ds-third ds-dieta " + (state.dietLog[key] || "");
+        dieta.title = "Dieta — toque para alternar";
+        dieta.addEventListener("click",(e)=>{ e.stopPropagation(); cycleDiet(key); });
+        const num = document.createElement("span");
+        num.className = "ds-num";
+        num.textContent = date.getDate();
+        cell.append(cardio, treino, dieta, num);
+        return cell;
+      }
+
+      const title = document.createElement("div");
+      title.className = "diet-row-title";
+
+      if(state.statPeriod === "week"){
+        title.textContent = "Cardio · Treino · Dieta — esta semana";
+        box.appendChild(title);
+        const head = document.createElement("div");
+        head.className = "day-status-headrow";
+        head.innerHTML = DAY_LETTERS.map(l=>'<span>'+l+'</span>').join("");
+        box.appendChild(head);
+        const grid = document.createElement("div");
+        grid.className = "day-status-grid";
+        const wkStart = startOfWeek(today);
+        for(let i=0;i<7;i++) grid.appendChild(buildStatusCell(addDays(wkStart,i), false, false));
+        box.appendChild(grid);
+      } else {
+        const cursor = state.dietMonthCursor;
+        title.innerHTML = '<span>Cardio · Treino · Dieta</span><span class="month-nav-mini">'+
+          '<button type="button" id="dietMonthPrev" aria-label="Mês anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M15 18l-6-6 6-6"/></svg></button>'+
+          '<span>'+MONTHS[cursor.getMonth()].slice(0,3)+" "+cursor.getFullYear()+'</span>'+
+          '<button type="button" id="dietMonthNext" aria-label="Próximo mês"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M9 18l6-6-6-6"/></svg></button>'+
+          '</span>';
+        box.appendChild(title);
+        const head = document.createElement("div");
+        head.className = "day-status-headrow month";
+        head.innerHTML = DAY_LETTERS.map(l=>'<span>'+l+'</span>').join("");
+        box.appendChild(head);
+        const grid = document.createElement("div");
+        grid.className = "day-status-grid month";
+        const gridStart = startOfWeek(startOfMonth(cursor));
+        for(let i=0;i<42;i++){
+          const d = addDays(gridStart,i);
+          grid.appendChild(buildStatusCell(d, true, d.getMonth()!==cursor.getMonth()));
+        }
+        box.appendChild(grid);
+        document.getElementById("dietMonthPrev").addEventListener("click", ()=>{
+          state.dietMonthCursor = new Date(cursor.getFullYear(), cursor.getMonth()-1, 1); renderCatStats(catKey);
+        });
+        document.getElementById("dietMonthNext").addEventListener("click", ()=>{
+          state.dietMonthCursor = new Date(cursor.getFullYear(), cursor.getMonth()+1, 1); renderCatStats(catKey);
+        });
+      }
+
+      const legend = document.createElement("div");
+      legend.className = "legend-row";
+      legend.innerHTML =
+        '<span><span class="legend-dot" style="background:var(--cardio-color)"></span>cardio</span>'+
+        '<span><span class="legend-dot" style="background:var(--treino-color)"></span>treino</span>'+
+        '<span><span class="legend-dot" style="background:var(--teal)"></span>dieta seguida</span>'+
+        '<span><span class="legend-dot" style="background:var(--marigold-dark)"></span>furou um pouco</span>'+
+        '<span><span class="legend-dot" style="background:var(--coral)"></span>furou muito</span>';
+      box.appendChild(legend);
+
+    } else if(catKey !== "carreira" && catKey !== "faculdade") {
+      const ph = document.createElement("div");
+      ph.className = "stats-placeholder";
+      ph.textContent = "Ainda sem estatísticas configuradas para esta área — em breve.";
+      box.appendChild(ph);
+    }
+  }
+
+  /* ---- formulário de nova tarefa (tela de categoria) ---- */
+  document.getElementById("catAddToggle").addEventListener("click", ()=>{
+    document.getElementById("catAddToggle").style.display="none";
+    document.getElementById("catAddForm").style.display="flex";
+  });
+  function resetCatForm(){
+    document.getElementById("catAddForm").style.display="none";
+    document.getElementById("catAddForm").reset();
+    document.getElementById("catAddToggle").style.display="flex";
+    document.getElementById("catScheduleFields").style.display="none";
+    document.getElementById("catDeadlineField").style.display="block";
+    document.getElementById("catRepeatDays").style.display="none";
+    document.getElementById("catDateField").style.display="block";
+    document.getElementById("catTaskDurationCustom").style.display="none";
+    state.catFormDays.clear();
+    document.querySelectorAll("#catRepeatDays .day-chip.active").forEach(c=>c.classList.remove("active"));
+  }
+  document.getElementById("catAddCancel").addEventListener("click", resetCatForm);
+  document.getElementById("catTaskDuration").addEventListener("change", function(){
+    document.getElementById("catTaskDurationCustom").style.display = this.value==="custom" ? "block" : "none";
+  });
+  document.getElementById("catTaskSchedule").addEventListener("change", function(){
+    document.getElementById("catScheduleFields").style.display = this.checked ? "flex" : "none";
+    document.getElementById("catDeadlineField").style.display = this.checked ? "none" : "block";
+    const t = document.getElementById("catTaskTime");
+    t.required = this.checked;
+  });
+  document.getElementById("catTaskRepeat").addEventListener("change", function(){
+    document.getElementById("catRepeatDays").style.display = this.checked ? "flex" : "none";
+    document.getElementById("catDateField").style.display = this.checked ? "none" : "block";
+  });
+  document.getElementById("catRepeatDays").addEventListener("click", (e)=>{
+    const chip = e.target.closest(".day-chip"); if(!chip) return;
+    const day = parseInt(chip.dataset.day,10);
+    if(state.catFormDays.has(day)){ state.catFormDays.delete(day); chip.classList.remove("active"); }
+    else { state.catFormDays.add(day); chip.classList.add("active"); }
+  });
+  document.getElementById("catAddForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    const title = document.getElementById("catTaskTitle").value.trim();
+    if(!title) return;
+    const types = typesForCategory(state.activeCategory);
+    const type = types.length ? document.getElementById("catTaskType").value : null;
+    const comment = document.getElementById("catTaskComment").value.trim();
+    const urgent = document.getElementById("catTaskUrgent").checked;
+    const scheduled = document.getElementById("catTaskSchedule").checked;
+    let time=null, duration=60, date=null, repeatDays=null, deadline=null;
+    if(scheduled){
+      time = document.getElementById("catTaskTime").value;
+      duration = resolveDuration(document.getElementById("catTaskDuration"), document.getElementById("catTaskDurationCustom"));
+      const repeat = document.getElementById("catTaskRepeat").checked;
+      if(repeat){
+        repeatDays = Array.from(state.catFormDays).sort();
+        if(repeatDays.length===0){ alert("Selecione ao menos um dia para a repetição."); return; }
+      } else {
+        date = document.getElementById("catTaskDate").value || dateKey(today);
+      }
+      if(!time){ alert("Informe um horário para agendar."); return; }
+    } else {
+      deadline = document.getElementById("catTaskDeadline").value || null;
+    }
+    state.tasks.push({ id: uid(), text:title, category: state.activeCategory, type, comment, urgent, done:false, time, duration, date, repeatDays, deadline });
+    persist();
+    resetCatForm();
+    renderCategory(); renderHome();
+  });
+
+  /* ================= INICIALIZAÇÃO ================= */
+  renderHome();
+
+})();
+</script>
+</body>
+</html>
