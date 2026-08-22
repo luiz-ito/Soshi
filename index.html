@@ -129,6 +129,29 @@
   .week-total{font-family:var(--font-mono);font-size:9.5px;color:var(--muted);}
   .bar-comment-mark{position:absolute;top:0;right:1px;font-size:9px;line-height:1;color:#fff;font-weight:700;text-shadow:0 0 2px rgba(0,0,0,0.6);cursor:pointer;padding:1px 2px;}
 
+  .week-swipe-wrap{overflow:hidden;touch-action:pan-y;cursor:grab;}
+  .week-swipe-wrap .week-grid{transition:transform .28s cubic-bezier(.22,1,.36,1);will-change:transform;}
+  .week-swipe-wrap.dragging .week-grid{transition:none;}
+
+  /* ---------- ANIMAÇÕES DE TOQUE (ESTILO APPLE) ---------- */
+  button, .week-day, .cat-card, .task-item, .icon-btn, .btn-primary, .btn-ghost, .stamp-check,
+  .day-event-block, .week-bar, .month-cell, .day-status-cell, .quick-add-toggle, .view-toggle button,
+  .stat-period-toggle button, .day-chip, .comment-mark, .ds-third, .back-btn, .task-move{
+    transition: transform .16s cubic-bezier(.22,1,.36,1), opacity .16s ease, background .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  button:active, .week-day:active, .cat-card:active, .task-item:active, .icon-btn:active, .btn-primary:active,
+  .btn-ghost:active, .stamp-check:active, .day-event-block:active, .week-bar:active, .month-cell:active,
+  .day-status-cell:active, .quick-add-toggle:active, .view-toggle button:active, .stat-period-toggle button:active,
+  .day-chip:active, .comment-mark:active, .ds-third:active, .back-btn:active, .task-move:active{
+    transform: scale(.94);
+    opacity:.82;
+  }
+  .cat-card:active, .task-item:active, .stats-card:active, .card:active{ transform: scale(.985); opacity:1; }
+  .month-cell:active{ transform: scale(.9); }
+  @keyframes pop-in{ from{ transform:scale(.92); opacity:0; } to{ transform:scale(1); opacity:1; } }
+  .screen.active{ animation: pop-in .22s cubic-bezier(.22,1,.36,1); }
+
+
   /* ---------- MONTH VIEW (HOME) ---------- */
   .month-grid{display:none;margin-top:10px;}
   .month-grid.active{display:block;}
@@ -201,11 +224,12 @@
     box-shadow:var(--shadow);padding:14px;}
   .schedule-form .row{display:flex;gap:6px;}
   .schedule-form input[type="text"], .schedule-form select{
-    flex:1;min-width:0;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 10px;font-size:13.5px;background:var(--fill);color:var(--text);
+    flex:1;min-width:0;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 10px;font-size:16px;background:var(--fill);color:var(--text);
   }
   .schedule-form input[type="time"], .schedule-form input[type="date"]{
-    border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:12.5px;font-family:var(--font-mono);background:var(--fill);color:var(--text);color-scheme:dark;
+    border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:16px;font-family:var(--font-mono);background:var(--fill);color:var(--text);color-scheme:dark;
   }
+  .schedule-form input[type="number"]{font-size:16px;}
   .field-label{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:2px;display:block;}
   .day-chips{display:flex;gap:5px;flex-wrap:wrap;}
   .day-chip{width:29px;height:29px;border-radius:50%;border:1.5px solid var(--line);background:var(--fill);font-family:var(--font-mono);
@@ -328,7 +352,9 @@
             <button type="button" id="calViewToggle">Mês</button>
           </div>
         </div>
-        <div class="week-grid" id="weekGrid"></div>
+        <div class="week-swipe-wrap" id="weekSwipeWrap">
+          <div class="week-grid" id="weekGrid"></div>
+        </div>
 
         <div class="month-grid" id="monthGrid">
           <div class="week-header" style="margin-bottom:2px;">
@@ -404,7 +430,7 @@
               <option value="480">8h</option>
               <option value="custom">Outra…</option>
             </select>
-            <input type="number" id="dayTaskDurationCustom" min="0.25" step="0.25" placeholder="Horas" style="display:none;margin-top:4px;width:100%;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:12.5px;font-family:var(--font-mono);background:var(--fill);color:var(--text);">
+            <input type="number" id="dayTaskDurationCustom" min="0.25" step="0.25" placeholder="Horas" style="display:none;margin-top:4px;width:100%;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:16px;font-family:var(--font-mono);background:var(--fill);color:var(--text);">
           </div>
           <div style="flex:1" id="dayCategoryField">
             <span class="field-label">Categoria</span>
@@ -517,7 +543,7 @@
                 <option value="480">8h</option>
                 <option value="custom">Outra…</option>
               </select>
-              <input type="number" id="catTaskDurationCustom" min="0.25" step="0.25" placeholder="Horas" style="display:none;margin-top:4px;width:100%;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:12.5px;font-family:var(--font-mono);background:var(--fill);color:var(--text);">
+              <input type="number" id="catTaskDurationCustom" min="0.25" step="0.25" placeholder="Horas" style="display:none;margin-top:4px;width:100%;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:16px;font-family:var(--font-mono);background:var(--fill);color:var(--text);">
             </div>
           </div>
           <label class="repeat-row">
@@ -721,6 +747,76 @@
   /* ================= CALENDÁRIO DA SEMANA (HOME) ================= */
   document.getElementById("prevWeek").addEventListener("click", ()=>{ state.weekStart = addDays(state.weekStart,-7); renderWeek(); });
   document.getElementById("nextWeek").addEventListener("click", ()=>{ state.weekStart = addDays(state.weekStart,7); renderWeek(); });
+
+  /* ---- arrastar (swipe) para trocar de semana ---- */
+  (function setupWeekSwipe(){
+    const wrap = document.getElementById("weekSwipeWrap");
+    const grid = document.getElementById("weekGrid");
+    let startX=0, startY=0, dx=0, dragging=false, pointerId=null;
+
+    function goToWeek(direction){
+      const w = wrap.clientWidth;
+      grid.style.transition = "transform .26s cubic-bezier(.22,1,.36,1)";
+      grid.style.transform = "translateX(" + (direction>0 ? -w : w) + "px)";
+      setTimeout(()=>{
+        state.weekStart = addDays(state.weekStart, direction*7);
+        renderWeek();
+        grid.style.transition = "none";
+        grid.style.transform = "translateX(" + (direction>0 ? w : -w) + "px)";
+        requestAnimationFrame(()=>{
+          requestAnimationFrame(()=>{
+            grid.style.transition = "transform .26s cubic-bezier(.22,1,.36,1)";
+            grid.style.transform = "translateX(0)";
+          });
+        });
+      }, 260);
+    }
+    function snapBack(){
+      grid.style.transition = "transform .26s cubic-bezier(.22,1,.36,1)";
+      grid.style.transform = "translateX(0)";
+    }
+    function onDown(e){
+      if(state.calendarView!=="week") return;
+      if(e.target.closest("#prevWeek, #nextWeek, .view-toggle button")) return;
+      pointerId = e.pointerId;
+      startX = e.clientX; startY = e.clientY; dx = 0; dragging = false;
+    }
+    function onMove(e){
+      if(pointerId===null || e.pointerId!==pointerId) return;
+      const ddx = e.clientX-startX, ddy = e.clientY-startY;
+      if(!dragging){
+        if(Math.abs(ddx) > 10 && Math.abs(ddx) > Math.abs(ddy)){
+          dragging = true;
+          wrap.classList.add("dragging");
+          try{ wrap.setPointerCapture(pointerId); }catch(err){}
+        } else if(Math.abs(ddy) > 10){
+          pointerId = null; return;
+        } else return;
+      }
+      dx = ddx;
+      e.preventDefault();
+      grid.style.transform = "translateX(" + dx + "px)";
+    }
+    function onUp(e){
+      if(pointerId===null || e.pointerId!==pointerId) return;
+      wrap.classList.remove("dragging");
+      if(dragging){
+        if(Math.abs(dx) > 6){
+          const blocker = function(ev){ ev.stopPropagation(); ev.preventDefault(); wrap.removeEventListener("click", blocker, true); };
+          wrap.addEventListener("click", blocker, true);
+        }
+        const threshold = Math.min(90, wrap.clientWidth*0.16);
+        if(dx <= -threshold) goToWeek(1);
+        else if(dx >= threshold) goToWeek(-1);
+        else snapBack();
+      }
+      pointerId = null; dragging = false; dx = 0;
+    }
+    wrap.addEventListener("pointerdown", onDown);
+    wrap.addEventListener("pointermove", onMove);
+    wrap.addEventListener("pointerup", onUp);
+    wrap.addEventListener("pointercancel", onUp);
+  })();
 
   function layoutOverlaps(events){
     const sorted = events.slice().sort((a,b)=>a.start-b.start);
