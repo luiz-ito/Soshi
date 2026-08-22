@@ -73,6 +73,8 @@
   .header .eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--marigold);margin:0 0 6px;}
   .header h1{font-family:var(--font-display);font-size:25px;font-weight:600;margin:0 0 3px;letter-spacing:.01em;}
   .header .subdate{font-size:13px;color:#A9B4C4;margin:0;}
+  .app-version{position:absolute;top:16px;right:18px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;
+    color:rgba(244,239,227,0.55);z-index:1;}
 
   .screen-header{
     background:var(--ink);color:#F4EFE3;padding:16px 16px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;position:relative;border-bottom:1px solid var(--line);
@@ -334,6 +336,7 @@
   <!-- ============ HOME ============ -->
   <div class="screen active" id="screen-home">
     <header class="header">
+      <span class="app-version" id="appVersion">Soshi v1.0</span>
       <p class="eyebrow" id="greeting">Bom dia</p>
       <h1 id="headerDate">—</h1>
     </header>
@@ -613,6 +616,7 @@
     carreira:{ label:"Carreira", parent:"carreira" }
   };
   const HOURLY_RATE = 18.40;
+  const APP_VERSION = "1.0";
 
   function loadJSON(key, fallback){ try{ const r=localStorage.getItem(key); return r?JSON.parse(r):fallback; }catch(e){ return fallback; } }
   function persist(){
@@ -745,6 +749,7 @@
     const greet = h<12 ? "Bom dia" : (h<18 ? "Boa tarde" : "Boa noite");
     document.getElementById("greeting").textContent = greet;
     document.getElementById("headerDate").textContent = today.getDate() + " de " + MONTHS[today.getMonth()];
+    document.getElementById("appVersion").textContent = "Soshi v" + APP_VERSION;
   }
 
   /* ================= CALENDÁRIO DA SEMANA (HOME) ================= */

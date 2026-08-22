@@ -1,0 +1,16 @@
+{
+  "short_name": "Soshi",
+  "name": "Soshi - Painel Pessoal",
+  "icons": [
+    {
+      "src": "icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "display": "standalone"
+}
