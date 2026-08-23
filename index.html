@@ -129,7 +129,11 @@
   .week-day-strip{width:100%;background:var(--fill);border:1px solid var(--line);border-radius:8px;position:relative;overflow:hidden;}
   .week-hour-axis{position:relative;}
   .week-hour-label{position:absolute;right:2px;transform:translateY(-50%);font-family:var(--font-mono);font-size:8px;color:var(--muted);white-space:nowrap;line-height:1;}
-  .week-bar{position:absolute;border-radius:3px;min-height:5px;box-sizing:border-box;}
+  .week-bar{position:absolute;border-radius:3px;min-height:5px;box-sizing:border-box;overflow:hidden;
+    border:1px solid rgba(0,0,0,0.28);display:flex;align-items:center;justify-content:center;}
+  .bar-label{position:static;font-size:6.5px;line-height:1.1;color:#fff;font-weight:700;max-width:100%;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 3px rgba(0,0,0,0.55);pointer-events:none;letter-spacing:-.01em;text-align:center;}
+  .bar-label.has-comment{max-width:calc(100% - 10px);}
   .week-bar.urgent{background:var(--urgent-color) !important;box-shadow:0 0 0 1.5px rgba(229,67,62,0.5);}
   .week-total{font-family:var(--font-mono);font-size:9.5px;color:var(--muted);}
   .bar-comment-mark{position:absolute;top:0;right:1px;font-size:9px;line-height:1;color:#fff;font-weight:700;text-shadow:0 0 2px rgba(0,0,0,0.6);cursor:pointer;padding:1px 2px;}
@@ -212,7 +216,8 @@
   .day-event-block.done{opacity:.45;}
   .day-event-block.urgent{background:var(--urgent-color) !important;box-shadow:0 0 0 2px rgba(229,67,62,0.35),0 2px 8px rgba(229,67,62,0.4);}
   .day-event-block .de-time{font-family:var(--font-mono);font-size:9.5px;opacity:.9;}
-  .day-event-block .de-title{font-size:12.5px;line-height:1.25;word-break:break-word;}
+  .day-event-block .de-title{font-size:14.5px;font-weight:700;line-height:1.28;word-break:break-word;letter-spacing:.005em;
+    text-shadow:0 1px 3px rgba(0,0,0,0.35);}
   .day-event-block.done .de-title{text-decoration:line-through;}
   .day-event-actions{position:absolute;top:3px;right:4px;display:flex;gap:3px;}
   .de-btn{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.28);border:none;display:flex;align-items:center;justify-content:center;color:#fff;}
@@ -723,7 +728,7 @@
     carreira:{ label:"Carreira", parent:"carreira" }
   };
   const HOURLY_RATE = 18.40;
-  const APP_VERSION = "1.01";
+  const APP_VERSION = "1.0";
 
   function loadJSON(key, fallback){ try{ const r=localStorage.getItem(key); return r?JSON.parse(r):fallback; }catch(e){ return fallback; } }
   function persist(){
@@ -1099,14 +1104,21 @@
       layoutOverlaps(events).forEach(ev=>{
         const topPct = Math.min(1,Math.max(0,(ev.start-STRIP_START)/(STRIP_END-STRIP_START)));
         const hPct = Math.max(0.045,(ev.end-ev.start)/(STRIP_END-STRIP_START));
+        const barHeightPx = Math.min(STRIP_HEIGHT-2,(hPct*STRIP_HEIGHT));
         const bar = document.createElement("div");
         bar.className = "week-bar" + (ev.o.urgent ? " urgent" : "");
         bar.style.top = (topPct*STRIP_HEIGHT)+"px";
-        bar.style.height = Math.min(STRIP_HEIGHT-2,(hPct*STRIP_HEIGHT))+"px";
+        bar.style.height = barHeightPx+"px";
         bar.style.left = "calc(" + ((ev.col/ev.cols)*100) + "% + 1px)";
         bar.style.width = "calc(" + (100/ev.cols) + "% - 2px)";
         if(!ev.o.urgent) bar.style.background = CATS[ev.o.category].hex;
         if(ev.o.done) bar.style.opacity = "0.35";
+        if(ev.cols<=2 && barHeightPx>=13){
+          const label = document.createElement("span");
+          label.className = "bar-label" + (ev.o.comment ? " has-comment" : "");
+          label.textContent = ev.o.title;
+          bar.appendChild(label);
+        }
         if(ev.o.comment){
           const mark = document.createElement("span");
           mark.className = "bar-comment-mark";
