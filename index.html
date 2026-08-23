@@ -141,13 +141,13 @@
   /* ---------- ANIMAÇÕES DE TOQUE (ESTILO APPLE) ---------- */
   button, .week-day, .cat-card, .task-item, .icon-btn, .btn-primary, .btn-ghost, .stamp-check,
   .day-event-block, .week-bar, .month-cell, .day-status-cell, .quick-add-toggle, .view-toggle button,
-  .stat-period-toggle button, .day-chip, .comment-mark, .ds-third, .back-btn, .task-move{
+  .stat-period-toggle button, .day-chip, .comment-mark, .ds-third, .back-btn{
     transition: transform .16s cubic-bezier(.22,1,.36,1), opacity .16s ease, background .15s ease, box-shadow .15s ease, border-color .15s ease;
   }
   button:active, .week-day:active, .cat-card:active, .task-item:active, .icon-btn:active, .btn-primary:active,
   .btn-ghost:active, .stamp-check:active, .day-event-block:active, .week-bar:active, .month-cell:active,
   .day-status-cell:active, .quick-add-toggle:active, .view-toggle button:active, .stat-period-toggle button:active,
-  .day-chip:active, .comment-mark:active, .ds-third:active, .back-btn:active, .task-move:active{
+  .day-chip:active, .comment-mark:active, .ds-third:active, .back-btn:active:active{
     transform: scale(.94);
     opacity:.82;
   }
@@ -291,19 +291,41 @@
     font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
 
   .task-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
-  .task-item{display:flex;align-items:flex-start;gap:10px;background:var(--fill);border:1px solid var(--line);border-radius:var(--radius-md);padding:10px;}
+  .task-item{display:flex;align-items:center;gap:12px;background:var(--fill);border:1px solid var(--line);border-radius:var(--radius-md);padding:10px;}
   .task-item.done{opacity:.55;}
   .task-item.done .task-title{text-decoration:line-through;}
   .task-item.urgent{border-color:var(--urgent-color);box-shadow:0 0 0 1px rgba(229,67,62,0.3);}
+  .task-item.longpress-active{box-shadow:0 0 0 2px var(--urgent-color) inset;background:rgba(229,67,62,0.08);}
   .urgent-tag{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:#fff;
     background:var(--urgent-color);border-radius:5px;padding:1px 5px;margin-right:5px;display:inline-block;}
-  .task-body{flex:1;min-width:0;}
+  .task-body{flex:1;min-width:0;cursor:pointer;}
   .task-title{font-size:14px;word-break:break-word;display:block;}
   .task-meta{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);margin-top:2px;}
   .task-type-tag{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);
     background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:1px 5px;margin-right:5px;display:inline-block;}
-  .task-actions{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
-  .task-move{font-family:var(--font-mono);font-size:9.5px;border:1px solid var(--line);background:var(--fill);border-radius:6px;padding:3px 4px;color:var(--muted);}
+  .task-item .stamp-check{width:32px;height:32px;flex-shrink:0;}
+  .task-item .stamp-check svg{width:17px;height:17px;}
+
+  /* ---------- POPOVER DE EXCLUSÃO (LONG PRESS) ---------- */
+  .delete-popover{position:fixed;background:var(--ink);border-radius:12px;padding:5px;box-shadow:0 10px 28px rgba(0,0,0,0.5);z-index:250;}
+  .delete-popover button{display:flex;align-items:center;gap:7px;background:transparent;border:none;color:#fff;
+    padding:10px 16px;font-size:13.5px;border-radius:8px;white-space:nowrap;}
+  .delete-popover button svg{width:16px;height:16px;color:var(--urgent-color);flex-shrink:0;}
+  .delete-popover button:active{background:rgba(255,255,255,0.1);}
+
+  /* ---------- MODAL: EDITAR TAREFA ---------- */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:none;align-items:flex-end;justify-content:center;z-index:300;}
+  .modal-overlay.active{display:flex;}
+  .modal-sheet{background:var(--paper);width:100%;max-width:480px;border-radius:22px 22px 0 0;padding:14px 18px 22px;
+    display:flex;flex-direction:column;gap:10px;max-height:88vh;overflow-y:auto;animation:sheet-in .24s cubic-bezier(.22,1,.36,1);
+    box-shadow:0 -8px 30px rgba(0,0,0,0.5);}
+  @keyframes sheet-in{ from{ transform:translateY(40px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+  .modal-handle{width:38px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 2px;}
+  .modal-title{font-family:var(--font-display);font-size:19px;margin:0 0 2px;color:var(--ink-text);}
+  .modal-actions{display:flex;gap:8px;margin-top:6px;}
+  .modal-actions .btn-primary{flex:1;justify-content:center;}
+  .modal-actions .btn-ghost{flex-shrink:0;}
+  #editTaskDeleteBtn{color:var(--urgent-color);}
 
   /* ---------- STATS: TOGGLE SEMANA/MÊS + FRAÇÕES ---------- */
   .stat-period-toggle{display:flex;background:var(--fill);border-radius:999px;padding:2px;width:fit-content;margin-bottom:12px;}
@@ -580,6 +602,90 @@
 
 </div>
 
+<!-- ============ MODAL: EDITAR TAREFA ============ -->
+<div class="modal-overlay" id="taskEditOverlay">
+  <div class="modal-sheet" id="taskEditSheet">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title">Editar tarefa</h3>
+    <form id="taskEditForm">
+      <div>
+        <span class="field-label">Título</span>
+        <input type="text" id="editTaskTitle" maxlength="80" required>
+      </div>
+      <div class="row">
+        <div style="flex:1">
+          <span class="field-label">Categoria</span>
+          <select id="editTaskCategory"></select>
+        </div>
+      </div>
+      <div id="editTypeField" style="display:none;">
+        <span class="field-label">Tipo</span>
+        <select id="editTaskType"></select>
+      </div>
+      <div>
+        <span class="field-label">Comentário (opcional)</span>
+        <input type="text" id="editTaskComment" placeholder="Anotação sobre a tarefa…" maxlength="200">
+      </div>
+      <label class="repeat-row urgent-row">
+        <input type="checkbox" id="editTaskUrgent">
+        Imediato (destacar em vermelho)
+      </label>
+
+      <div id="editDeadlineField" style="display:none;">
+        <span class="field-label">Prazo (opcional)</span>
+        <input type="date" id="editTaskDeadline">
+      </div>
+
+      <div id="editScheduleFields" style="display:none;flex-direction:column;gap:8px;">
+        <div class="row">
+          <div>
+            <span class="field-label">Horário</span>
+            <input type="time" id="editTaskTime">
+          </div>
+          <div>
+            <span class="field-label">Duração</span>
+            <select id="editTaskDuration">
+              <option value="30">30 min</option>
+              <option value="60">1h</option>
+              <option value="90">1h30</option>
+              <option value="120">2h</option>
+              <option value="180">3h</option>
+              <option value="240">4h</option>
+              <option value="300">5h</option>
+              <option value="360">6h</option>
+              <option value="480">8h</option>
+              <option value="custom">Outra…</option>
+            </select>
+            <input type="number" id="editTaskDurationCustom" min="0.25" step="0.25" placeholder="Horas" style="display:none;margin-top:4px;width:100%;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:16px;font-family:var(--font-mono);background:var(--fill);color:var(--text);">
+          </div>
+        </div>
+        <div id="editDateFieldWrap">
+          <span class="field-label">Data</span>
+          <input type="date" id="editTaskDate">
+        </div>
+        <div id="editRepeatDaysWrap" style="display:none;">
+          <span class="field-label">Repete em</span>
+          <div id="editRepeatDays" class="day-chips">
+            <button type="button" class="day-chip" data-day="0">D</button>
+            <button type="button" class="day-chip" data-day="1">S</button>
+            <button type="button" class="day-chip" data-day="2">T</button>
+            <button type="button" class="day-chip" data-day="3">Q</button>
+            <button type="button" class="day-chip" data-day="4">Q</button>
+            <button type="button" class="day-chip" data-day="5">S</button>
+            <button type="button" class="day-chip" data-day="6">S</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="editTaskDeleteBtn">Excluir</button>
+        <button type="button" class="btn-ghost" id="editTaskCancelBtn">Cancelar</button>
+        <button type="submit" class="btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
 (function(){
   "use strict";
@@ -588,6 +694,7 @@
   const TASKS_KEY = "painel_tasks_v2";
   const TRACKERS_KEY = "painel_trackers_v2";
   const SESSIONS_KEY = "painel_sessions_v1";
+  const SEED_KEY = "painel_seeded_v1";
 
   const CATS = {
     faculdade: { label:"Faculdade", color:"var(--c-faculdade)", hex:"#5FBE6C",
@@ -616,7 +723,7 @@
     carreira:{ label:"Carreira", parent:"carreira" }
   };
   const HOURLY_RATE = 18.40;
-  const APP_VERSION = "1.0";
+  const APP_VERSION = "1.01";
 
   function loadJSON(key, fallback){ try{ const r=localStorage.getItem(key); return r?JSON.parse(r):fallback; }catch(e){ return fallback; } }
   function persist(){
@@ -651,6 +758,31 @@
   };
 
   function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+  /* ---- tarefas de rotina pré-definidas (inseridas apenas uma vez, editáveis depois) ---- */
+  function seedDefaultTasks(){
+    if(localStorage.getItem(SEED_KEY)) return;
+    const MON_FRI = [1,2,3,4,5];
+    const defaults = [
+      { text:"MAHLE", category:"carreira", type:"trabalho", time:"07:20", duration:300, repeatDays:MON_FRI },
+      { text:"MAHLE", category:"carreira", type:"trabalho", time:"13:00", duration:60,  repeatDays:MON_FRI },
+      { text:"IM485A", category:"faculdade", type:"aulas", time:"15:00", duration:180, repeatDays:[2] },
+      { text:"EM790A", category:"faculdade", type:"aulas", time:"19:00", duration:120, repeatDays:[2] },
+      { text:"CE738E", category:"faculdade", type:"aulas", time:"21:00", duration:120, repeatDays:[2] },
+      { text:"CE738E", category:"faculdade", type:"aulas", time:"19:00", duration:120, repeatDays:[4] },
+      { text:"BE310",  category:"faculdade", type:"aulas", time:"21:00", duration:120, repeatDays:[4] }
+    ];
+    defaults.forEach(d=>{
+      state.tasks.push({
+        id: uid(), text:d.text, category:d.category, type:d.type, comment:"", urgent:false,
+        done:false, time:d.time, duration:d.duration, date:null, repeatDays:d.repeatDays, deadline:null
+      });
+    });
+    localStorage.setItem(SEED_KEY, "1");
+    persist();
+  }
+  seedDefaultTasks();
+
   function dateKey(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
   function isSameDay(a,b){ return dateKey(a)===dateKey(b); }
   function startOfWeek(d){ const c=new Date(d); c.setDate(c.getDate()-c.getDay()); c.setHours(0,0,0,0); return c; }
@@ -729,6 +861,63 @@
     mark.title = "Ver comentário";
     mark.addEventListener("click",(e)=>{ e.stopPropagation(); showCommentPopup(mark, comment); });
     return mark;
+  }
+
+  /* ---- exclusão via long-press ---- */
+  function showDeletePopover(anchorRect, onDelete){
+    document.querySelectorAll(".delete-popover").forEach(p=>p.remove());
+    const pop = document.createElement("div");
+    pop.className = "delete-popover";
+    pop.innerHTML = '<button type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2m2 0-1 13a2 2 0 01-2 2H9a2 2 0 01-2-2L6 7"/></svg>Excluir tarefa</button>';
+    document.body.appendChild(pop);
+    const pw = pop.offsetWidth, ph = pop.offsetHeight;
+    let left = anchorRect.left + anchorRect.width/2 - pw/2;
+    left = Math.max(8, Math.min(left, window.innerWidth-pw-8));
+    let top = anchorRect.top - ph - 8;
+    if(top<8) top = anchorRect.bottom + 8;
+    pop.style.left = left+"px";
+    pop.style.top = top+"px";
+    pop.querySelector("button").addEventListener("click", ()=>{ pop.remove(); onDelete(); });
+    const closeIt = (e)=>{ if(!pop.contains(e.target)){ pop.remove(); document.removeEventListener("click",closeIt,true); } };
+    setTimeout(()=> document.addEventListener("click", closeIt, true), 0);
+  }
+  function deleteTaskWithConfirm(t){
+    const sessCount = state.sessions.filter(s=>s.parentId===t.id).length;
+    if(sessCount>0 && !confirm("Esta tarefa tem "+sessCount+" sessão(ões) agendada(s) no calendário. Excluir mesmo assim?")) return;
+    state.tasks = state.tasks.filter(x=>x.id!==t.id);
+    state.sessions = state.sessions.filter(s=>s.parentId!==t.id);
+    persist(); renderCategory(); renderHome();
+  }
+  function attachTaskCardInteractions(li, body, check, t, catKey){
+    let timer=null, moved=false, longPressed=false, startX=0, startY=0, activePointerId=null;
+    function clearTimer(){ if(timer){ clearTimeout(timer); timer=null; } }
+    li.addEventListener("pointerdown",(e)=>{
+      if(e.target.closest(".stamp-check") || e.target.closest(".comment-mark")) return;
+      activePointerId = e.pointerId; moved=false; longPressed=false;
+      startX=e.clientX; startY=e.clientY;
+      timer = setTimeout(()=>{
+        longPressed = true;
+        li.classList.add("longpress-active");
+        if(navigator.vibrate) navigator.vibrate(12);
+        showDeletePopover(li.getBoundingClientRect(), ()=> deleteTaskWithConfirm(t));
+      }, 480);
+    });
+    li.addEventListener("pointermove",(e)=>{
+      if(e.pointerId!==activePointerId) return;
+      if(Math.abs(e.clientX-startX)>10 || Math.abs(e.clientY-startY)>10){ moved=true; clearTimer(); }
+    });
+    function release(e){
+      if(e.pointerId!==activePointerId) return;
+      clearTimer();
+      li.classList.remove("longpress-active");
+      if(!moved && !longPressed && !e.target.closest(".stamp-check") && !e.target.closest(".comment-mark")){
+        openTaskEditor(t, catKey);
+      }
+      activePointerId=null;
+    }
+    li.addEventListener("pointerup", release);
+    li.addEventListener("pointercancel", ()=>{ clearTimer(); li.classList.remove("longpress-active"); activePointerId=null; });
+    li.addEventListener("contextmenu",(e)=> e.preventDefault());
   }
   function toggleOccurrence(occ){
     if(occ.isSession){ occ.session.done = !occ.session.done; }
@@ -1139,6 +1328,120 @@
     });
   }
 
+  /* ================= MODAL: EDITAR TAREFA ================= */
+  let editingTask = null;
+  const editState = { repeatDays: new Set() };
+
+  function fillCategorySelect(sel, selected){
+    sel.innerHTML = "";
+    Object.keys(CATS).forEach(k=>{
+      const opt = document.createElement("option");
+      opt.value = k; opt.textContent = CATS[k].label;
+      if(k===selected) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+  function refreshEditTypeField(){
+    const cat = document.getElementById("editTaskCategory").value;
+    const types = typesForCategory(cat);
+    document.getElementById("editTypeField").style.display = types.length ? "block" : "none";
+    if(types.length) fillTypeSelect(document.getElementById("editTaskType"), cat);
+  }
+
+  function openTaskEditor(t, catKey){
+    editingTask = t;
+    document.getElementById("editTaskTitle").value = t.text;
+    fillCategorySelect(document.getElementById("editTaskCategory"), t.category);
+    refreshEditTypeField();
+    if(t.type && typesForCategory(t.category).includes(t.type)){
+      document.getElementById("editTaskType").value = t.type;
+    }
+    document.getElementById("editTaskComment").value = t.comment || "";
+    document.getElementById("editTaskUrgent").checked = !!t.urgent;
+
+    const isRepeat = t.repeatDays && t.repeatDays.length;
+    const isScheduled = !!t.time;
+    document.getElementById("editDeadlineField").style.display = isScheduled ? "none" : "block";
+    document.getElementById("editTaskDeadline").value = t.deadline || "";
+    document.getElementById("editScheduleFields").style.display = isScheduled ? "flex" : "none";
+
+    if(isScheduled){
+      document.getElementById("editTaskTime").value = t.time;
+      const durSel = document.getElementById("editTaskDuration");
+      const durCustom = document.getElementById("editTaskDurationCustom");
+      const knownDurations = ["30","60","90","120","180","240","300","360","480"];
+      if(knownDurations.includes(String(t.duration))){
+        durSel.value = String(t.duration); durCustom.style.display="none";
+      } else {
+        durSel.value = "custom"; durCustom.style.display="block"; durCustom.value = (t.duration/60);
+      }
+      document.getElementById("editDateFieldWrap").style.display = isRepeat ? "none" : "block";
+      document.getElementById("editTaskDate").value = isRepeat ? "" : (t.date || "");
+      document.getElementById("editRepeatDaysWrap").style.display = isRepeat ? "block" : "none";
+      editState.repeatDays = new Set(isRepeat ? t.repeatDays : []);
+      document.querySelectorAll("#editRepeatDays .day-chip").forEach(chip=>{
+        chip.classList.toggle("active", editState.repeatDays.has(parseInt(chip.dataset.day,10)));
+      });
+    }
+
+    document.getElementById("taskEditOverlay").classList.add("active");
+  }
+  function closeTaskEditor(){
+    document.getElementById("taskEditOverlay").classList.remove("active");
+    editingTask = null;
+  }
+  document.getElementById("taskEditOverlay").addEventListener("click", (e)=>{
+    if(e.target.id==="taskEditOverlay") closeTaskEditor();
+  });
+  document.getElementById("editTaskCancelBtn").addEventListener("click", closeTaskEditor);
+  document.getElementById("editTaskCategory").addEventListener("change", refreshEditTypeField);
+  document.getElementById("editTaskDuration").addEventListener("change", function(){
+    document.getElementById("editTaskDurationCustom").style.display = this.value==="custom" ? "block" : "none";
+  });
+  document.getElementById("editRepeatDays").addEventListener("click", (e)=>{
+    const chip = e.target.closest(".day-chip"); if(!chip) return;
+    const day = parseInt(chip.dataset.day,10);
+    if(editState.repeatDays.has(day)){ editState.repeatDays.delete(day); chip.classList.remove("active"); }
+    else { editState.repeatDays.add(day); chip.classList.add("active"); }
+  });
+  document.getElementById("editTaskDeleteBtn").addEventListener("click", ()=>{
+    if(!editingTask) return;
+    const t = editingTask;
+    closeTaskEditor();
+    deleteTaskWithConfirm(t);
+  });
+  document.getElementById("taskEditForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    if(!editingTask) return;
+    const t = editingTask;
+    const title = document.getElementById("editTaskTitle").value.trim();
+    if(!title) return;
+    t.text = title;
+    t.category = document.getElementById("editTaskCategory").value;
+    const types = typesForCategory(t.category);
+    t.type = types.length ? document.getElementById("editTaskType").value : null;
+    t.comment = document.getElementById("editTaskComment").value.trim();
+    t.urgent = document.getElementById("editTaskUrgent").checked;
+
+    if(t.time){
+      t.time = document.getElementById("editTaskTime").value;
+      t.duration = resolveDuration(document.getElementById("editTaskDuration"), document.getElementById("editTaskDurationCustom"));
+      if(t.repeatDays && t.repeatDays.length){
+        const days = Array.from(editState.repeatDays).sort();
+        if(days.length===0){ alert("Selecione ao menos um dia para a repetição."); return; }
+        t.repeatDays = days;
+      } else {
+        t.date = document.getElementById("editTaskDate").value || t.date;
+      }
+    } else {
+      t.deadline = document.getElementById("editTaskDeadline").value || null;
+    }
+
+    persist();
+    closeTaskEditor();
+    renderCategory(); renderHome();
+  });
+
   document.getElementById("dayTaskCategory").addEventListener("change", function(){
     const types = typesForCategory(this.value);
     document.getElementById("dayTypeField").style.display = types.length ? "block" : "none";
@@ -1346,56 +1649,9 @@
           }
         }
 
-        const actions = document.createElement("div");
-        actions.className = "task-actions";
-        const commentBtn = document.createElement("button");
-        commentBtn.className = "icon-btn";
-        commentBtn.title = t.comment ? "Editar comentário" : "Adicionar comentário";
-        commentBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>';
-        commentBtn.addEventListener("click", ()=>{
-          const v = prompt("Comentário da tarefa:", t.comment || "");
-          if(v===null) return;
-          t.comment = v.trim();
-          persist(); renderCategory(); renderHome();
-        });
-        const urgentBtn = document.createElement("button");
-        urgentBtn.className = "icon-btn";
-        urgentBtn.title = t.urgent ? "Remover modo imediato" : "Marcar como imediato";
-        urgentBtn.style.color = t.urgent ? "var(--urgent-color)" : "";
-        urgentBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="'+(t.urgent?'currentColor':'none')+'" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>';
-        urgentBtn.addEventListener("click", ()=>{
-          t.urgent = !t.urgent;
-          persist(); renderCategory(); renderHome();
-        });
-        const move = document.createElement("select");
-        move.className = "task-move";
-        move.setAttribute("aria-label","Mudar categoria");
-        Object.keys(CATS).forEach(k=>{
-          const opt = document.createElement("option");
-          opt.value = k; opt.textContent = CATS[k].label;
-          if(k===catKey) opt.selected = true;
-          move.appendChild(opt);
-        });
-        move.addEventListener("change", function(){
-          t.category = this.value;
-          if(!TYPES[t.type] || TYPES[t.type].parent!==this.value) t.type = null;
-          persist(); renderCategory(); renderHome();
-        });
-        const del = document.createElement("button");
-        del.className = "icon-btn";
-        del.setAttribute("aria-label","Excluir tarefa");
-        del.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2m2 0-1 13a2 2 0 01-2 2H9a2 2 0 01-2-2L6 7"/></svg>';
-        del.addEventListener("click", ()=>{
-          const sessCount = state.sessions.filter(s=>s.parentId===t.id).length;
-          if(sessCount>0 && !confirm("Esta tarefa tem "+sessCount+" sessão(ões) agendada(s) no calendário. Excluir mesmo assim?")) return;
-          state.tasks = state.tasks.filter(x=>x.id!==t.id);
-          state.sessions = state.sessions.filter(s=>s.parentId!==t.id);
-          persist(); renderCategory(); renderHome();
-        });
-        actions.append(commentBtn, urgentBtn, move, del);
-
-        li.append(check, body, actions);
+        li.append(check, body);
         list.appendChild(li);
+        attachTaskCardInteractions(li, body, check, t, catKey);
       });
     }
   }
