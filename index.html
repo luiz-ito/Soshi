@@ -48,7 +48,7 @@
     --urgent-color:#E5433E;
   }
 
-  *{box-sizing:border-box;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
   body{
     background:var(--stone);
@@ -60,6 +60,14 @@
     display:flex;
     justify-content:center;
     padding:0 0 40px;
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-touch-callout:none;
+  }
+  input, textarea, select, [contenteditable]{
+    -webkit-user-select:text;
+    user-select:text;
+    -webkit-touch-callout:default;
   }
   .app{width:100%;max-width:480px;min-height:100vh;background:var(--stone);display:flex;flex-direction:column;position:relative;}
   @media (min-width:560px){
@@ -735,7 +743,7 @@
     carreira:{ label:"Carreira", parent:"carreira" }
   };
   const HOURLY_RATE = 18.40;
-  const APP_VERSION = "1.0";
+  const APP_VERSION = "1.2";
 
   function loadJSON(key, fallback){ try{ const r=localStorage.getItem(key); return r?JSON.parse(r):fallback; }catch(e){ return fallback; } }
   function persist(){
