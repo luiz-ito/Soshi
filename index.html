@@ -145,13 +145,18 @@
   .week-hour-axis{position:relative;}
   .week-hour-label{position:absolute;right:2px;transform:translateY(-50%);font-family:var(--font-mono);font-size:8px;color:var(--muted);white-space:nowrap;line-height:1;}
   .week-bar{position:absolute;border-radius:3px;min-height:5px;box-sizing:border-box;overflow:hidden;
-    border:1px solid rgba(0,0,0,0.28);display:flex;align-items:center;justify-content:center;}
-  .bar-label{position:static;font-size:6.5px;line-height:1.1;color:#fff;font-weight:700;max-width:100%;
+    border:1px solid rgba(0,0,0,0.28);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .week-bar.longpress-active{box-shadow:0 0 0 2px var(--urgent-color);}
+  .bar-label{position:static;font-size:6.5px;line-height:1.1;color:#fff;font-weight:700;max-width:calc(100% - 10px);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 3px rgba(0,0,0,0.55);pointer-events:none;letter-spacing:-.01em;text-align:center;}
-  .bar-label.has-comment{max-width:calc(100% - 10px);}
+  .bar-label.has-comment{max-width:calc(100% - 20px);}
   .week-bar.urgent{background:var(--urgent-color) !important;box-shadow:0 0 0 1.5px rgba(229,67,62,0.5);}
+  .week-bar.urgent.longpress-active{box-shadow:0 0 0 2px #fff;}
   .week-total{font-family:var(--font-mono);font-size:9.5px;color:var(--muted);}
-  .bar-comment-mark{position:absolute;top:0;right:1px;font-size:9px;line-height:1;color:#fff;font-weight:700;text-shadow:0 0 2px rgba(0,0,0,0.6);cursor:pointer;padding:1px 2px;}
+  .bar-comment-mark{position:absolute;top:0;right:1px;font-size:9px;line-height:1;color:#fff;font-weight:700;text-shadow:0 0 2px rgba(0,0,0,0.6);cursor:pointer;padding:1px 2px;z-index:2;}
+  .bar-check{position:absolute;top:1.5px;left:1.5px;width:8px;height:8px;border-radius:50%;
+    border:1.2px solid rgba(255,255,255,0.85);background:rgba(0,0,0,0.18);cursor:pointer;z-index:2;}
+  .bar-check.checked{background:#fff;border-color:#fff;}
 
   .week-swipe-wrap{overflow:hidden;touch-action:pan-y;cursor:grab;}
   .week-swipe-wrap .week-grid{transition:transform .28s cubic-bezier(.22,1,.36,1);will-change:transform;}
@@ -630,13 +635,14 @@
 <div class="modal-overlay" id="taskEditOverlay">
   <div class="modal-sheet" id="taskEditSheet">
     <div class="modal-handle"></div>
-    <h3 class="modal-title">Editar tarefa</h3>
+    <h3 class="modal-title" id="editModalTitle">Editar tarefa</h3>
+    <div class="task-meta" id="editSessionParentInfo" style="display:none;margin-top:-6px;"></div>
     <form id="taskEditForm">
-      <div>
+      <div id="editTitleFieldWrap">
         <span class="field-label">Título</span>
         <input type="text" id="editTaskTitle" maxlength="80" required>
       </div>
-      <div class="row">
+      <div class="row" id="editCategoryFieldWrap">
         <div style="flex:1">
           <span class="field-label">Categoria</span>
           <select id="editTaskCategory"></select>
@@ -650,7 +656,7 @@
         <span class="field-label">Comentário (opcional)</span>
         <input type="text" id="editTaskComment" placeholder="Anotação sobre a tarefa…" maxlength="200">
       </div>
-      <label class="repeat-row urgent-row">
+      <label class="repeat-row urgent-row" id="editUrgentFieldWrap">
         <input type="checkbox" id="editTaskUrgent">
         Imediato (destacar em vermelho)
       </label>
@@ -943,6 +949,43 @@
     li.addEventListener("pointercancel", ()=>{ clearTimer(); li.classList.remove("longpress-active"); activePointerId=null; });
     li.addEventListener("contextmenu",(e)=> e.preventDefault());
   }
+  function attachBarInteractions(bar, occ){
+    let timer=null, moved=false, longPressed=false, startX=0, startY=0, activePointerId=null;
+    function clearTimer(){ if(timer){ clearTimeout(timer); timer=null; } }
+    bar.addEventListener("pointerdown",(e)=>{
+      if(e.target.closest(".bar-check") || e.target.closest(".bar-comment-mark")) return;
+      e.stopPropagation();
+      activePointerId = e.pointerId; moved=false; longPressed=false;
+      startX=e.clientX; startY=e.clientY;
+      timer = setTimeout(()=>{
+        longPressed = true;
+        bar.classList.add("longpress-active");
+        if(navigator.vibrate) navigator.vibrate(12);
+        showDeletePopover(bar.getBoundingClientRect(), ()=>{
+          deleteOccurrence(occ);
+          renderWeek(); renderDay(); renderHome();
+        });
+      }, 480);
+    });
+    bar.addEventListener("pointermove",(e)=>{
+      if(e.pointerId!==activePointerId) return;
+      if(Math.abs(e.clientX-startX)>10 || Math.abs(e.clientY-startY)>10){ moved=true; clearTimer(); }
+    });
+    function release(e){
+      if(e.pointerId!==activePointerId) return;
+      clearTimer();
+      bar.classList.remove("longpress-active");
+      if(!moved && !longPressed && !e.target.closest(".bar-check") && !e.target.closest(".bar-comment-mark")){
+        e.stopPropagation();
+        if(occ.isSession) openSessionEditor(occ);
+        else openTaskEditor(occ.task, occ.task.category);
+      }
+      activePointerId=null;
+    }
+    bar.addEventListener("pointerup", release);
+    bar.addEventListener("pointercancel", ()=>{ clearTimer(); bar.classList.remove("longpress-active"); activePointerId=null; });
+    bar.addEventListener("contextmenu",(e)=> e.preventDefault());
+  }
   function toggleOccurrence(occ){
     if(occ.isSession){ occ.session.done = !occ.session.done; }
     else if(occ.isRepeat){ state.occStatus[occ.key] = !occ.done; }
@@ -1138,6 +1181,15 @@
           label.textContent = ev.o.title;
           bar.appendChild(label);
         }
+        const check = document.createElement("span");
+        check.className = "bar-check" + (ev.o.done ? " checked" : "");
+        check.title = "Concluir";
+        check.addEventListener("click",(e)=>{
+          e.stopPropagation();
+          toggleOccurrence(ev.o);
+          renderWeek(); renderHome();
+        });
+        bar.appendChild(check);
         if(ev.o.comment){
           const mark = document.createElement("span");
           mark.className = "bar-comment-mark";
@@ -1146,6 +1198,8 @@
           mark.addEventListener("click",(e)=>{ e.stopPropagation(); showCommentPopup(mark, ev.o.comment); });
           bar.appendChild(mark);
         }
+        bar.addEventListener("click",(e)=> e.stopPropagation());
+        attachBarInteractions(bar, ev.o);
         strip.appendChild(bar);
       });
 
@@ -1359,8 +1413,9 @@
     });
   }
 
-  /* ================= MODAL: EDITAR TAREFA ================= */
+  /* ================= MODAL: EDITAR TAREFA / SESSÃO ================= */
   let editingTask = null;
+  let editingSession = null;
   const editState = { repeatDays: new Set() };
 
   function fillCategorySelect(sel, selected){
@@ -1381,6 +1436,14 @@
 
   function openTaskEditor(t, catKey){
     editingTask = t;
+    editingSession = null;
+    document.getElementById("editModalTitle").textContent = "Editar tarefa";
+    document.getElementById("editSessionParentInfo").style.display = "none";
+    document.getElementById("editTitleFieldWrap").style.display = "block";
+    document.getElementById("editCategoryFieldWrap").style.display = "flex";
+    document.getElementById("editUrgentFieldWrap").style.display = "flex";
+    document.getElementById("editTaskTitle").disabled = false;
+
     document.getElementById("editTaskTitle").value = t.text;
     fillCategorySelect(document.getElementById("editTaskCategory"), t.category);
     refreshEditTypeField();
@@ -1417,9 +1480,43 @@
 
     document.getElementById("taskEditOverlay").classList.add("active");
   }
+
+  function openSessionEditor(occ){
+    editingSession = occ.session;
+    editingTask = occ.task;
+    document.getElementById("editModalTitle").textContent = "Editar sessão";
+    const info = document.getElementById("editSessionParentInfo");
+    info.style.display = "block";
+    info.textContent = "Sessão de: " + occ.task.text;
+
+    document.getElementById("editTitleFieldWrap").style.display = "none";
+    document.getElementById("editCategoryFieldWrap").style.display = "none";
+    document.getElementById("editTypeField").style.display = "none";
+    document.getElementById("editUrgentFieldWrap").style.display = "none";
+    document.getElementById("editDeadlineField").style.display = "none";
+    document.getElementById("editRepeatDaysWrap").style.display = "none";
+
+    document.getElementById("editTaskComment").value = occ.session.comment || "";
+    document.getElementById("editScheduleFields").style.display = "flex";
+    document.getElementById("editTaskTime").value = occ.session.time;
+    const durSel = document.getElementById("editTaskDuration");
+    const durCustom = document.getElementById("editTaskDurationCustom");
+    const knownDurations = ["30","60","90","120","180","240","300","360","480"];
+    if(knownDurations.includes(String(occ.session.duration))){
+      durSel.value = String(occ.session.duration); durCustom.style.display="none";
+    } else {
+      durSel.value = "custom"; durCustom.style.display="block"; durCustom.value = (occ.session.duration/60);
+    }
+    document.getElementById("editDateFieldWrap").style.display = "block";
+    document.getElementById("editTaskDate").value = occ.session.date;
+
+    document.getElementById("taskEditOverlay").classList.add("active");
+  }
+
   function closeTaskEditor(){
     document.getElementById("taskEditOverlay").classList.remove("active");
     editingTask = null;
+    editingSession = null;
   }
   document.getElementById("taskEditOverlay").addEventListener("click", (e)=>{
     if(e.target.id==="taskEditOverlay") closeTaskEditor();
@@ -1436,6 +1533,15 @@
     else { editState.repeatDays.add(day); chip.classList.add("active"); }
   });
   document.getElementById("editTaskDeleteBtn").addEventListener("click", ()=>{
+    if(editingSession){
+      const s = editingSession;
+      closeTaskEditor();
+      if(confirm("Excluir esta sessão?")){
+        state.sessions = state.sessions.filter(x=>x.id!==s.id);
+        persist(); renderWeek(); renderDay(); renderHome();
+      }
+      return;
+    }
     if(!editingTask) return;
     const t = editingTask;
     closeTaskEditor();
@@ -1443,6 +1549,19 @@
   });
   document.getElementById("taskEditForm").addEventListener("submit", function(e){
     e.preventDefault();
+
+    if(editingSession){
+      const s = editingSession;
+      s.time = document.getElementById("editTaskTime").value;
+      s.duration = resolveDuration(document.getElementById("editTaskDuration"), document.getElementById("editTaskDurationCustom"));
+      s.date = document.getElementById("editTaskDate").value || s.date;
+      s.comment = document.getElementById("editTaskComment").value.trim();
+      persist();
+      closeTaskEditor();
+      renderWeek(); renderDay(); renderHome();
+      return;
+    }
+
     if(!editingTask) return;
     const t = editingTask;
     const title = document.getElementById("editTaskTitle").value.trim();
