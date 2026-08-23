@@ -248,13 +248,17 @@
   .schedule-form{display:flex;flex-direction:column;gap:8px;background:var(--paper);border-radius:var(--radius-lg);
     box-shadow:var(--shadow);padding:14px;}
   .schedule-form .row{display:flex;gap:6px;}
-  .schedule-form input[type="text"], .schedule-form select{
+  .schedule-form input[type="text"], .schedule-form select,
+  #taskEditForm input[type="text"], #taskEditForm select{
     flex:1;min-width:0;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 10px;font-size:16px;background:var(--fill);color:var(--text);
   }
-  .schedule-form input[type="time"], .schedule-form input[type="date"]{
+  .schedule-form input[type="time"], .schedule-form input[type="date"],
+  #taskEditForm input[type="time"], #taskEditForm input[type="date"]{
     border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:16px;font-family:var(--font-mono);background:var(--fill);color:var(--text);color-scheme:dark;
   }
-  .schedule-form input[type="number"]{font-size:16px;}
+  .schedule-form input[type="number"], #taskEditForm input[type="number"]{font-size:16px;}
+  /* garantia geral: qualquer input/select/textarea do app nunca fica abaixo de 16px (evita zoom automático do iOS) */
+  input, select, textarea{font-size:max(16px, 1em);}
   .field-label{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:2px;display:block;}
   .day-chips{display:flex;gap:5px;flex-wrap:wrap;}
   .day-chip{width:29px;height:29px;border-radius:50%;border:1.5px solid var(--line);background:var(--fill);font-family:var(--font-mono);
