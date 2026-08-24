@@ -135,6 +135,9 @@
   .view-toggle button.active{background:var(--ink);color:var(--marigold);}
   .week-grid{display:grid;grid-template-columns:26px repeat(7,1fr);gap:4px;margin-top:10px;align-items:start;}
   .week-day-head{display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .special-badge, .special-badge-spacer{height:10px;display:flex;align-items:center;justify-content:center;}
+  .special-badge{font-family:var(--font-mono);font-size:6.5px;font-weight:700;text-transform:uppercase;letter-spacing:.01em;
+    color:var(--urgent-color);cursor:pointer;white-space:nowrap;}
   .week-axis-col{display:flex;flex-direction:column;gap:6px;padding:6px 0 8px;}
   .week-day{background:transparent;border:none;display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px 2px 8px;border-radius:12px;}
   .week-day:hover{background:rgba(255,255,255,0.06);}
@@ -145,18 +148,13 @@
   .week-hour-axis{position:relative;}
   .week-hour-label{position:absolute;right:2px;transform:translateY(-50%);font-family:var(--font-mono);font-size:8px;color:var(--muted);white-space:nowrap;line-height:1;}
   .week-bar{position:absolute;border-radius:3px;min-height:5px;box-sizing:border-box;overflow:hidden;
-    border:1px solid rgba(0,0,0,0.28);display:flex;align-items:center;justify-content:center;cursor:pointer;}
-  .week-bar.longpress-active{box-shadow:0 0 0 2px var(--urgent-color);}
+    border:1px solid rgba(0,0,0,0.28);display:flex;align-items:center;justify-content:center;}
   .bar-label{position:static;font-size:6.5px;line-height:1.1;color:#fff;font-weight:700;max-width:calc(100% - 10px);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 3px rgba(0,0,0,0.55);pointer-events:none;letter-spacing:-.01em;text-align:center;}
   .bar-label.has-comment{max-width:calc(100% - 20px);}
   .week-bar.urgent{background:var(--urgent-color) !important;box-shadow:0 0 0 1.5px rgba(229,67,62,0.5);}
-  .week-bar.urgent.longpress-active{box-shadow:0 0 0 2px #fff;}
   .week-total{font-family:var(--font-mono);font-size:9.5px;color:var(--muted);}
   .bar-comment-mark{position:absolute;top:0;right:1px;font-size:9px;line-height:1;color:#fff;font-weight:700;text-shadow:0 0 2px rgba(0,0,0,0.6);cursor:pointer;padding:1px 2px;z-index:2;}
-  .bar-check{position:absolute;top:1.5px;left:1.5px;width:8px;height:8px;border-radius:50%;
-    border:1.2px solid rgba(255,255,255,0.85);background:rgba(0,0,0,0.18);cursor:pointer;z-index:2;}
-  .bar-check.checked{background:#fff;border-color:#fff;}
 
   .week-swipe-wrap{overflow:hidden;touch-action:pan-y;cursor:grab;}
   .week-swipe-wrap .week-grid{transition:transform .28s cubic-bezier(.22,1,.36,1);will-change:transform;}
@@ -194,13 +192,16 @@
   .month-cell.selected-week{background:color-mix(in srgb, var(--marigold) 16%, var(--fill));}
   .month-cell .m-dots{display:flex;gap:2px;height:5px;}
   .month-cell .m-dot{width:5px;height:5px;border-radius:50%;}
+  .month-cell .m-badge{position:absolute;top:2px;left:2px;right:2px;font-family:var(--font-mono);font-size:5px;font-weight:700;
+    text-transform:uppercase;letter-spacing:0;color:var(--urgent-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    text-align:center;cursor:pointer;}
   .month-label{font-family:var(--font-mono);font-size:11.5px;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;flex:1;text-align:center;}
 
   /* ---------- COMENTÁRIOS ---------- */
   .comment-mark{color:var(--marigold-dark);font-weight:700;cursor:pointer;margin-left:3px;font-size:1.05em;}
   .comment-popover{
     position:fixed;max-width:230px;background:var(--ink);color:var(--ink-text);font-size:12.5px;line-height:1.4;
-    padding:9px 11px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.5);z-index:200;
+    padding:9px 11px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.5);z-index:200;white-space:pre-line;
   }
   .comment-popover::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
     border:6px solid transparent;border-top-color:var(--ink);}
@@ -230,18 +231,22 @@
   .day-hour-label{width:46px;flex-shrink:0;font-family:var(--font-mono);font-size:10px;color:var(--muted);padding:4px 0 0 6px;border-right:1px solid var(--line);}
   .day-events-layer{position:absolute;top:0;left:47px;right:6px;bottom:0;cursor:pointer;}
   .day-event-block{
-    position:absolute;border-radius:10px;padding:5px 8px;color:#fff;overflow:hidden;box-sizing:border-box;
-    display:flex;flex-direction:column;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.15);
+    position:absolute;border-radius:10px;padding:5px 32px 5px 8px;color:#fff;overflow:hidden;box-sizing:border-box;
+    display:flex;flex-direction:column;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.15);cursor:pointer;
   }
   .day-event-block.done{opacity:.45;}
   .day-event-block.urgent{background:var(--urgent-color) !important;box-shadow:0 0 0 2px rgba(229,67,62,0.35),0 2px 8px rgba(229,67,62,0.4);}
+  .day-event-block.longpress-active{box-shadow:0 0 0 2px #fff,0 2px 10px rgba(0,0,0,0.4);}
   .day-event-block .de-time{font-family:var(--font-mono);font-size:9.5px;opacity:.9;}
   .day-event-block .de-title{font-size:14.5px;font-weight:700;line-height:1.28;word-break:break-word;letter-spacing:.005em;
     text-shadow:0 1px 3px rgba(0,0,0,0.35);}
   .day-event-block.done .de-title{text-decoration:line-through;}
-  .day-event-actions{position:absolute;top:3px;right:4px;display:flex;gap:3px;}
-  .de-btn{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.28);border:none;display:flex;align-items:center;justify-content:center;color:#fff;}
-  .de-btn svg{width:10px;height:10px;}
+  .de-check{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;
+    border:2px solid rgba(255,255,255,0.85);background:rgba(255,255,255,0.12);
+    display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;}
+  .de-check svg{width:13px;height:13px;stroke-dasharray:20;stroke-dashoffset:20;transition:stroke-dashoffset .2s ease;}
+  .de-check.checked{background:#fff;color:var(--ink);}
+  .de-check.checked svg{stroke-dashoffset:0;}
 
   .quick-add-toggle{
     display:flex;align-items:center;justify-content:center;gap:6px;background:var(--ink);color:var(--marigold);
@@ -265,6 +270,10 @@
   /* garantia geral: qualquer input/select/textarea do app nunca fica abaixo de 16px (evita zoom automático do iOS) */
   input, select, textarea{font-size:max(16px, 1em);}
   .field-label{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:2px;display:block;}
+  .mini-toggle{display:flex;background:var(--fill);border-radius:8px;padding:2px;margin-bottom:4px;}
+  .mini-toggle button{flex:1;border:none;background:transparent;font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.02em;color:var(--muted);padding:6px 3px;border-radius:6px;white-space:nowrap;}
+  .mini-toggle button.active{background:var(--ink);color:var(--marigold);}
   .day-chips{display:flex;gap:5px;flex-wrap:wrap;}
   .day-chip{width:29px;height:29px;border-radius:50%;border:1.5px solid var(--line);background:var(--fill);font-family:var(--font-mono);
     font-size:10.5px;color:var(--muted);display:flex;align-items:center;justify-content:center;}
@@ -325,6 +334,11 @@
   .task-item.done .task-title{text-decoration:line-through;}
   .task-item.urgent{border-color:var(--urgent-color);box-shadow:0 0 0 1px rgba(229,67,62,0.3);}
   .task-item.longpress-active{box-shadow:0 0 0 2px var(--urgent-color) inset;background:rgba(229,67,62,0.08);}
+  .task-item.dragging{opacity:.9;box-shadow:0 8px 20px rgba(0,0,0,0.45);transform:scale(1.02);position:relative;z-index:5;background:var(--paper);}
+  .drag-handle{flex-shrink:0;width:26px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--muted);
+    cursor:grab;touch-action:none;}
+  .drag-handle svg{width:15px;height:15px;}
+  .task-item.dragging .drag-handle{cursor:grabbing;color:var(--ink-text);}
   .urgent-tag{font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:#fff;
     background:var(--urgent-color);border-radius:5px;padding:1px 5px;margin-right:5px;display:inline-block;}
   .task-body{flex:1;min-width:0;cursor:pointer;}
@@ -474,20 +488,29 @@
             <input type="time" id="dayTaskTime" required>
           </div>
           <div>
-            <span class="field-label">Duração</span>
-            <select id="dayTaskDuration">
-              <option value="30">30 min</option>
-              <option value="60" selected>1h</option>
-              <option value="90">1h30</option>
-              <option value="120">2h</option>
-              <option value="180">3h</option>
-              <option value="240">4h</option>
-              <option value="300">5h</option>
-              <option value="360">6h</option>
-              <option value="480">8h</option>
-              <option value="custom">Outra…</option>
-            </select>
-            <input type="number" id="dayTaskDurationCustom" min="0.25" step="0.25" placeholder="Horas" style="display:none;margin-top:4px;width:100%;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:16px;font-family:var(--font-mono);background:var(--fill);color:var(--text);">
+            <span class="field-label">Fim</span>
+            <div class="mini-toggle" id="dayEndModeToggle">
+              <button type="button" class="active" data-mode="duration">Duração</button>
+              <button type="button" data-mode="end">Horário final</button>
+            </div>
+            <div id="dayDurationWrap">
+              <select id="dayTaskDuration">
+                <option value="30">30 min</option>
+                <option value="60" selected>1h</option>
+                <option value="90">1h30</option>
+                <option value="120">2h</option>
+                <option value="180">3h</option>
+                <option value="240">4h</option>
+                <option value="300">5h</option>
+                <option value="360">6h</option>
+                <option value="480">8h</option>
+                <option value="custom">Outra…</option>
+              </select>
+              <input type="number" id="dayTaskDurationCustom" min="0.25" step="0.25" placeholder="Horas" style="display:none;margin-top:4px;width:100%;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:16px;font-family:var(--font-mono);background:var(--fill);color:var(--text);">
+            </div>
+            <div id="dayEndTimeWrap" style="display:none;">
+              <input type="time" id="dayTaskEndTime">
+            </div>
           </div>
           <div style="flex:1" id="dayCategoryField">
             <span class="field-label">Categoria</span>
@@ -587,20 +610,29 @@
               <input type="time" id="catTaskTime">
             </div>
             <div>
-              <span class="field-label">Duração</span>
-              <select id="catTaskDuration">
-                <option value="30">30 min</option>
-                <option value="60" selected>1h</option>
-                <option value="90">1h30</option>
-                <option value="120">2h</option>
-                <option value="180">3h</option>
-                <option value="240">4h</option>
-                <option value="300">5h</option>
-                <option value="360">6h</option>
-                <option value="480">8h</option>
-                <option value="custom">Outra…</option>
-              </select>
-              <input type="number" id="catTaskDurationCustom" min="0.25" step="0.25" placeholder="Horas" style="display:none;margin-top:4px;width:100%;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:16px;font-family:var(--font-mono);background:var(--fill);color:var(--text);">
+              <span class="field-label">Fim</span>
+              <div class="mini-toggle" id="catEndModeToggle">
+                <button type="button" class="active" data-mode="duration">Duração</button>
+                <button type="button" data-mode="end">Horário final</button>
+              </div>
+              <div id="catDurationWrap">
+                <select id="catTaskDuration">
+                  <option value="30">30 min</option>
+                  <option value="60" selected>1h</option>
+                  <option value="90">1h30</option>
+                  <option value="120">2h</option>
+                  <option value="180">3h</option>
+                  <option value="240">4h</option>
+                  <option value="300">5h</option>
+                  <option value="360">6h</option>
+                  <option value="480">8h</option>
+                  <option value="custom">Outra…</option>
+                </select>
+                <input type="number" id="catTaskDurationCustom" min="0.25" step="0.25" placeholder="Horas" style="display:none;margin-top:4px;width:100%;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:16px;font-family:var(--font-mono);background:var(--fill);color:var(--text);">
+              </div>
+              <div id="catEndTimeWrap" style="display:none;">
+                <input type="time" id="catTaskEndTime">
+              </div>
             </div>
           </div>
           <label class="repeat-row">
@@ -673,20 +705,29 @@
             <input type="time" id="editTaskTime">
           </div>
           <div>
-            <span class="field-label">Duração</span>
-            <select id="editTaskDuration">
-              <option value="30">30 min</option>
-              <option value="60">1h</option>
-              <option value="90">1h30</option>
-              <option value="120">2h</option>
-              <option value="180">3h</option>
-              <option value="240">4h</option>
-              <option value="300">5h</option>
-              <option value="360">6h</option>
-              <option value="480">8h</option>
-              <option value="custom">Outra…</option>
-            </select>
-            <input type="number" id="editTaskDurationCustom" min="0.25" step="0.25" placeholder="Horas" style="display:none;margin-top:4px;width:100%;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:16px;font-family:var(--font-mono);background:var(--fill);color:var(--text);">
+            <span class="field-label">Fim</span>
+            <div class="mini-toggle" id="editEndModeToggle">
+              <button type="button" class="active" data-mode="duration">Duração</button>
+              <button type="button" data-mode="end">Horário final</button>
+            </div>
+            <div id="editDurationWrap">
+              <select id="editTaskDuration">
+                <option value="30">30 min</option>
+                <option value="60">1h</option>
+                <option value="90">1h30</option>
+                <option value="120">2h</option>
+                <option value="180">3h</option>
+                <option value="240">4h</option>
+                <option value="300">5h</option>
+                <option value="360">6h</option>
+                <option value="480">8h</option>
+                <option value="custom">Outra…</option>
+              </select>
+              <input type="number" id="editTaskDurationCustom" min="0.25" step="0.25" placeholder="Horas" style="display:none;margin-top:4px;width:100%;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;font-size:16px;font-family:var(--font-mono);background:var(--fill);color:var(--text);">
+            </div>
+            <div id="editEndTimeWrap" style="display:none;">
+              <input type="time" id="editTaskEndTime">
+            </div>
           </div>
         </div>
         <div id="editDateFieldWrap">
@@ -813,11 +854,112 @@
   }
   seedDefaultTasks();
 
+  /* ---- migração: garante que toda tarefa tenha um valor de ordenação ---- */
+  state.tasks.forEach((t,i)=>{ if(t.order===undefined || t.order===null) t.order = i; });
+  function nextTaskOrder(){
+    return state.tasks.reduce((max,t)=> Math.max(max, t.order||0), 0) + 1;
+  }
+
   function dateKey(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
   function isSameDay(a,b){ return dateKey(a)===dateKey(b); }
   function startOfWeek(d){ const c=new Date(d); c.setDate(c.getDate()-c.getDay()); c.setHours(0,0,0,0); return c; }
   function addDays(d,n){ const c=new Date(d); c.setDate(c.getDate()+n); return c; }
   function timeToFloat(t){ const [h,m]=t.split(":").map(Number); return h + m/60; }
+
+  /* ================= DATAS ESPECIAIS (feriados, comemorações, aniversários) ================= */
+  const FIXED_HOLIDAYS = [
+    { md:"01-01", label:"Confraternização Universal" },
+    { md:"04-21", label:"Tiradentes" },
+    { md:"05-01", label:"Dia do Trabalho" },
+    { md:"07-09", label:"Revolução Constitucionalista de 1932 (SP)" },
+    { md:"08-20", label:"Aniversário de Jundiaí" },
+    { md:"09-07", label:"Independência do Brasil" },
+    { md:"10-12", label:"Nossa Senhora Aparecida" },
+    { md:"11-02", label:"Finados" },
+    { md:"11-15", label:"Proclamação da República" },
+    { md:"11-20", label:"Consciência Negra" },
+    { md:"12-25", label:"Natal" }
+  ];
+  const COMEMORACOES_FIXAS = [
+    { md:"06-12", label:"Dia dos Namorados" },
+    { md:"10-12", label:"Dia das Crianças" },
+    { md:"10-15", label:"Dia do Professor" }
+  ];
+  const BIRTHDAYS = [
+    { md:"02-02", name:"Eu" },
+    { md:"04-18", name:"Otávio" },
+    { md:"05-28", name:"Mariana" },
+    { md:"03-16", name:"Mãe" },
+    { md:"11-29", name:"Pai" },
+    { md:"10-25", name:"Vô" },
+    { md:"11-11", name:"Vó" },
+    { md:"04-21", name:"Erika" },
+    { md:"03-22", name:"Sofia" },
+    { md:"07-08", name:"Namoro" },
+    { md:"02-17", name:"Andrei" },
+    { md:"05-09", name:"Kt" },
+    { md:"01-07", name:"Jopa" },
+    { md:"10-24", name:"Nicolau" },
+    { md:"10-17", name:"Eduardo" },
+    { md:"08-14", name:"Victor" },
+    { md:"05-24", name:"Bismilo" },
+    { md:"03-14", name:"Gêmeos" },
+    { md:"09-04", name:"Munhoz" },
+    { md:"02-04", name:"Kauã" }
+  ];
+
+  function computeEaster(year){
+    const a = year % 19, b = Math.floor(year/100), c = year % 100;
+    const d = Math.floor(b/4), e = b % 4, f = Math.floor((b+8)/25);
+    const g = Math.floor((b-f+1)/3), h = (19*a+b-d-g+15) % 30;
+    const i = Math.floor(c/4), k = c % 4, l = (32+2*e+2*i-h-k) % 7;
+    const m = Math.floor((a+11*h+22*l)/451);
+    const month = Math.floor((h+l-7*m+114)/31);
+    const day = ((h+l-7*m+114) % 31) + 1;
+    return new Date(year, month-1, day);
+  }
+  function nthSundayOfMonth(year, month, n){
+    const d = new Date(year, month-1, 1);
+    let count = 0;
+    while(true){
+      if(d.getDay()===0){ count++; if(count===n) return new Date(d); }
+      d.setDate(d.getDate()+1);
+    }
+  }
+  function getSpecialEntriesForDate(date){
+    const md = String(date.getMonth()+1).padStart(2,"0")+"-"+String(date.getDate()).padStart(2,"0");
+    const entries = [];
+    FIXED_HOLIDAYS.forEach(h=>{ if(h.md===md) entries.push({ type:"feriado", label:h.label }); });
+    COMEMORACOES_FIXAS.forEach(c=>{ if(c.md===md) entries.push({ type:"comemoracao", label:c.label }); });
+    BIRTHDAYS.forEach(b=>{ if(b.md===md) entries.push({ type:"aniversario", label:b.name }); });
+
+    const year = date.getFullYear();
+    const easter = computeEaster(year);
+    const shift = (base,n)=>{ const c=new Date(base); c.setDate(c.getDate()+n); return c; };
+    const movable = [
+      { date: shift(easter,-48), type:"feriado", label:"Carnaval (segunda-feira)" },
+      { date: shift(easter,-47), type:"feriado", label:"Carnaval (terça-feira)" },
+      { date: shift(easter,-2),  type:"feriado", label:"Sexta-feira Santa" },
+      { date: easter,            type:"comemoracao", label:"Páscoa" },
+      { date: shift(easter,60),  type:"feriado", label:"Corpus Christi" },
+      { date: nthSundayOfMonth(year,5,2), type:"comemoracao", label:"Dia das Mães" },
+      { date: nthSundayOfMonth(year,8,2), type:"comemoracao", label:"Dia dos Pais" }
+    ];
+    movable.forEach(m=>{ if(isSameDay(m.date, date)) entries.push({ type:m.type, label:m.label }); });
+    return entries;
+  }
+  const SPECIAL_TYPE_LABEL = { feriado:"Feriado", aniversario:"Aniversário", comemoracao:"Comemoração" };
+  function getSpecialBadge(date){
+    const entries = getSpecialEntriesForDate(date);
+    if(!entries.length) return null;
+    const priority = { feriado:0, aniversario:1, comemoracao:2 };
+    entries.sort((a,b)=> priority[a.type]-priority[b.type]);
+    return { text: SPECIAL_TYPE_LABEL[entries[0].type], entries };
+  }
+  function showSpecialDayPopup(anchorEl, entries){
+    const lines = entries.map(e=> SPECIAL_TYPE_LABEL[e.type]+": "+e.label);
+    showCommentPopup(anchorEl, lines.join("\n"));
+  }
 
   /* ================= NAVEGAÇÃO DE TELAS ================= */
   function showScreen(name){
@@ -922,7 +1064,7 @@
     let timer=null, moved=false, longPressed=false, startX=0, startY=0, activePointerId=null;
     function clearTimer(){ if(timer){ clearTimeout(timer); timer=null; } }
     li.addEventListener("pointerdown",(e)=>{
-      if(e.target.closest(".stamp-check") || e.target.closest(".comment-mark")) return;
+      if(e.target.closest(".stamp-check") || e.target.closest(".comment-mark") || e.target.closest(".drag-handle")) return;
       activePointerId = e.pointerId; moved=false; longPressed=false;
       startX=e.clientX; startY=e.clientY;
       timer = setTimeout(()=>{
@@ -940,7 +1082,7 @@
       if(e.pointerId!==activePointerId) return;
       clearTimer();
       li.classList.remove("longpress-active");
-      if(!moved && !longPressed && !e.target.closest(".stamp-check") && !e.target.closest(".comment-mark")){
+      if(!moved && !longPressed && !e.target.closest(".stamp-check") && !e.target.closest(".comment-mark") && !e.target.closest(".drag-handle")){
         openTaskEditor(t, catKey);
       }
       activePointerId=null;
@@ -949,42 +1091,82 @@
     li.addEventListener("pointercancel", ()=>{ clearTimer(); li.classList.remove("longpress-active"); activePointerId=null; });
     li.addEventListener("contextmenu",(e)=> e.preventDefault());
   }
-  function attachBarInteractions(bar, occ){
+  function attachDragReorder(list, li, handle){
+    let dragging=false, pointerId=null;
+    function getItems(){ return Array.from(list.querySelectorAll(".task-item")); }
+    handle.addEventListener("pointerdown",(e)=>{
+      e.stopPropagation();
+      e.preventDefault();
+      pointerId = e.pointerId;
+      dragging = true;
+      li.classList.add("dragging");
+      try{ handle.setPointerCapture(pointerId); }catch(err){}
+    });
+    handle.addEventListener("pointermove",(e)=>{
+      if(!dragging || e.pointerId!==pointerId) return;
+      e.preventDefault();
+      const y = e.clientY;
+      const items = getItems();
+      const draggedIndex = items.indexOf(li);
+      for(const sib of items){
+        if(sib===li) continue;
+        const rect = sib.getBoundingClientRect();
+        const midY = rect.top + rect.height/2;
+        const sibIndex = items.indexOf(sib);
+        if(sibIndex < draggedIndex && y < midY){ list.insertBefore(li, sib); break; }
+        else if(sibIndex > draggedIndex && y > midY){ list.insertBefore(li, sib.nextSibling); break; }
+      }
+    });
+    function finishDrag(e){
+      if(!dragging || e.pointerId!==pointerId) return;
+      dragging = false;
+      li.classList.remove("dragging");
+      getItems().forEach((item,i)=>{
+        const tk = state.tasks.find(x=>x.id===item.dataset.taskId);
+        if(tk) tk.order = i;
+      });
+      persist();
+      pointerId = null;
+    }
+    handle.addEventListener("pointerup", finishDrag);
+    handle.addEventListener("pointercancel", finishDrag);
+  }
+  function attachDayBlockInteractions(block, occ){
     let timer=null, moved=false, longPressed=false, startX=0, startY=0, activePointerId=null;
     function clearTimer(){ if(timer){ clearTimeout(timer); timer=null; } }
-    bar.addEventListener("pointerdown",(e)=>{
-      if(e.target.closest(".bar-check") || e.target.closest(".bar-comment-mark")) return;
+    block.addEventListener("pointerdown",(e)=>{
+      if(e.target.closest(".de-check") || e.target.closest(".comment-mark")) return;
       e.stopPropagation();
       activePointerId = e.pointerId; moved=false; longPressed=false;
       startX=e.clientX; startY=e.clientY;
       timer = setTimeout(()=>{
         longPressed = true;
-        bar.classList.add("longpress-active");
+        block.classList.add("longpress-active");
         if(navigator.vibrate) navigator.vibrate(12);
-        showDeletePopover(bar.getBoundingClientRect(), ()=>{
+        showDeletePopover(block.getBoundingClientRect(), ()=>{
           deleteOccurrence(occ);
-          renderWeek(); renderDay(); renderHome();
+          renderDay(); renderWeek(); renderHome();
         });
       }, 480);
     });
-    bar.addEventListener("pointermove",(e)=>{
+    block.addEventListener("pointermove",(e)=>{
       if(e.pointerId!==activePointerId) return;
       if(Math.abs(e.clientX-startX)>10 || Math.abs(e.clientY-startY)>10){ moved=true; clearTimer(); }
     });
     function release(e){
       if(e.pointerId!==activePointerId) return;
       clearTimer();
-      bar.classList.remove("longpress-active");
-      if(!moved && !longPressed && !e.target.closest(".bar-check") && !e.target.closest(".bar-comment-mark")){
+      block.classList.remove("longpress-active");
+      if(!moved && !longPressed && !e.target.closest(".de-check") && !e.target.closest(".comment-mark")){
         e.stopPropagation();
         if(occ.isSession) openSessionEditor(occ);
         else openTaskEditor(occ.task, occ.task.category);
       }
       activePointerId=null;
     }
-    bar.addEventListener("pointerup", release);
-    bar.addEventListener("pointercancel", ()=>{ clearTimer(); bar.classList.remove("longpress-active"); activePointerId=null; });
-    bar.addEventListener("contextmenu",(e)=> e.preventDefault());
+    block.addEventListener("pointerup", release);
+    block.addEventListener("pointercancel", ()=>{ clearTimer(); block.classList.remove("longpress-active"); activePointerId=null; });
+    block.addEventListener("contextmenu",(e)=> e.preventDefault());
   }
   function toggleOccurrence(occ){
     if(occ.isSession){ occ.session.done = !occ.session.done; }
@@ -1123,7 +1305,7 @@
     const axisHead = document.createElement("div");
     axisHead.className = "week-day-head";
     axisHead.style.visibility = "hidden";
-    axisHead.innerHTML = '<div class="wd-letter">D</div><div class="wd-num">00</div>';
+    axisHead.innerHTML = '<span class="special-badge-spacer"></span><div class="wd-letter">D</div><div class="wd-num">00</div>';
     const axis = document.createElement("div");
     axis.className = "week-hour-axis";
     axis.style.height = STRIP_HEIGHT+"px";
@@ -1150,7 +1332,13 @@
 
       const head = document.createElement("div");
       head.className = "week-day-head";
-      head.innerHTML = '<div class="wd-letter">'+DAY_LETTERS[d.getDay()]+'</div><div class="wd-num">'+d.getDate()+'</div>';
+      const badge = getSpecialBadge(d);
+      head.innerHTML = (badge ? '<span class="special-badge">'+badge.text+'</span>' : '<span class="special-badge-spacer"></span>') +
+        '<div class="wd-letter">'+DAY_LETTERS[d.getDay()]+'</div><div class="wd-num">'+d.getDate()+'</div>';
+      if(badge){
+        const badgeEl = head.querySelector(".special-badge");
+        badgeEl.addEventListener("click",(e)=>{ e.stopPropagation(); showSpecialDayPopup(badgeEl, badge.entries); });
+      }
 
       const strip = document.createElement("div");
       strip.className = "week-day-strip";
@@ -1181,15 +1369,6 @@
           label.textContent = ev.o.title;
           bar.appendChild(label);
         }
-        const check = document.createElement("span");
-        check.className = "bar-check" + (ev.o.done ? " checked" : "");
-        check.title = "Concluir";
-        check.addEventListener("click",(e)=>{
-          e.stopPropagation();
-          toggleOccurrence(ev.o);
-          renderWeek(); renderHome();
-        });
-        bar.appendChild(check);
         if(ev.o.comment){
           const mark = document.createElement("span");
           mark.className = "bar-comment-mark";
@@ -1198,8 +1377,6 @@
           mark.addEventListener("click",(e)=>{ e.stopPropagation(); showCommentPopup(mark, ev.o.comment); });
           bar.appendChild(mark);
         }
-        bar.addEventListener("click",(e)=> e.stopPropagation());
-        attachBarInteractions(bar, ev.o);
         strip.appendChild(bar);
       });
 
@@ -1248,13 +1425,20 @@
       const d = addDays(gridStart,i);
       const occs = getOccurrencesForDate(d);
       const cats = [...new Set(occs.map(o=>o.category))];
+      const badge = getSpecialBadge(d);
       const cell = document.createElement("button");
       cell.className = "month-cell"
         + (d.getMonth()!==cursor.getMonth() ? " outside" : "")
         + (isSameDay(d,today) ? " today" : "")
         + (d>=selWeekStart && d<=selWeekEnd ? " selected-week" : "");
-      cell.innerHTML = '<span>'+d.getDate()+'</span><span class="m-dots">'+
+      cell.innerHTML =
+        (badge ? '<span class="m-badge">'+badge.text+'</span>' : '') +
+        '<span>'+d.getDate()+'</span><span class="m-dots">'+
         cats.slice(0,4).map(c=>'<span class="m-dot" style="background:'+CATS[c].hex+'"></span>').join("")+'</span>';
+      if(badge){
+        const badgeEl = cell.querySelector(".m-badge");
+        badgeEl.addEventListener("click",(e)=>{ e.stopPropagation(); showSpecialDayPopup(badgeEl, badge.entries); });
+      }
       cell.addEventListener("click", ()=>{
         state.weekStart = startOfWeek(d);
         state.selectedDate = new Date(d);
@@ -1307,6 +1491,8 @@
     document.getElementById("dayAddToggle").style.display = "none";
     document.getElementById("dayAddForm").style.display = "flex";
     setDayFormKind("normal");
+    setEndModeTo("day","duration");
+    document.getElementById("dayTaskEndTime").value = "";
     document.getElementById("dayTaskTime").value = timeStr;
     document.getElementById("dayTaskTitle").focus();
   }
@@ -1370,18 +1556,15 @@
       if(!o.urgent) block.style.background = CATS[o.category].hex;
       block.innerHTML =
         '<div class="de-time">'+o.time+(o.isRepeat?' ↻':'')+(o.isSession?' ⏱':'')+(o.urgent?' ⚡':'')+'</div><div class="de-title"></div>'+
-        '<div class="day-event-actions">'+
-          '<button class="de-btn" data-act="toggle" aria-label="Concluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M4 12l6 6L20 6"/></svg></button>'+
-          '<button class="de-btn" data-act="del" aria-label="Excluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M5 5l14 14M19 5L5 19"/></svg></button>'+
-        '</div>';
+        '<button type="button" class="de-check'+(o.done?' checked':'')+'" aria-label="Concluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M4 12l6 6L20 6"/></svg></button>';
       block.querySelector(".de-title").textContent = o.title;
       if(o.comment){
         const mark = makeCommentMark(o.comment);
         mark.style.color = "#fff";
         block.querySelector(".de-title").appendChild(mark);
       }
-      block.querySelector('[data-act="toggle"]').addEventListener("click",(e)=>{ e.stopPropagation(); toggleOccurrence(o); renderDay(); renderHome(); });
-      block.querySelector('[data-act="del"]').addEventListener("click",(e)=>{ e.stopPropagation(); deleteOccurrence(o); renderDay(); renderHome(); });
+      block.querySelector(".de-check").addEventListener("click",(e)=>{ e.stopPropagation(); toggleOccurrence(o); renderDay(); renderHome(); });
+      attachDayBlockInteractions(block, o);
       layer.appendChild(block);
     });
 
@@ -1460,6 +1643,8 @@
     document.getElementById("editScheduleFields").style.display = isScheduled ? "flex" : "none";
 
     if(isScheduled){
+      setEndModeTo("edit","duration");
+      document.getElementById("editTaskEndTime").value = "";
       document.getElementById("editTaskTime").value = t.time;
       const durSel = document.getElementById("editTaskDuration");
       const durCustom = document.getElementById("editTaskDurationCustom");
@@ -1498,6 +1683,8 @@
 
     document.getElementById("editTaskComment").value = occ.session.comment || "";
     document.getElementById("editScheduleFields").style.display = "flex";
+    setEndModeTo("edit","duration");
+    document.getElementById("editTaskEndTime").value = "";
     document.getElementById("editTaskTime").value = occ.session.time;
     const durSel = document.getElementById("editTaskDuration");
     const durCustom = document.getElementById("editTaskDurationCustom");
@@ -1553,7 +1740,9 @@
     if(editingSession){
       const s = editingSession;
       s.time = document.getElementById("editTaskTime").value;
-      s.duration = resolveDuration(document.getElementById("editTaskDuration"), document.getElementById("editTaskDurationCustom"));
+      const dur = resolveDurationField("edit", s.time, "editTaskDuration", "editTaskDurationCustom", "editTaskEndTime");
+      if(dur===null){ alert("Informe um horário final válido."); return; }
+      s.duration = dur;
       s.date = document.getElementById("editTaskDate").value || s.date;
       s.comment = document.getElementById("editTaskComment").value.trim();
       persist();
@@ -1575,7 +1764,9 @@
 
     if(t.time){
       t.time = document.getElementById("editTaskTime").value;
-      t.duration = resolveDuration(document.getElementById("editTaskDuration"), document.getElementById("editTaskDurationCustom"));
+      const dur = resolveDurationField("edit", t.time, "editTaskDuration", "editTaskDurationCustom", "editTaskEndTime");
+      if(dur===null){ alert("Informe um horário final válido."); return; }
+      t.duration = dur;
       if(t.repeatDays && t.repeatDays.length){
         const days = Array.from(editState.repeatDays).sort();
         if(days.length===0){ alert("Selecione ao menos um dia para a repetição."); return; }
@@ -1607,6 +1798,59 @@
     }
     return parseInt(selectEl.value,10);
   }
+
+  /* ---- toggle Duração / Horário final (reutilizado nos 3 formulários) ---- */
+  function computeDurationFromEnd(startTime, endTime){
+    const [sh,sm] = startTime.split(":").map(Number);
+    const [eh,em] = endTime.split(":").map(Number);
+    let mins = (eh*60+em) - (sh*60+sm);
+    if(mins <= 0) mins += 24*60;
+    return mins;
+  }
+  function computeEndFromDuration(startTime, durationMin){
+    const [sh,sm] = startTime.split(":").map(Number);
+    let total = (sh*60+sm+durationMin) % (24*60);
+    const eh = Math.floor(total/60), em = total%60;
+    return String(eh).padStart(2,"0")+":"+String(em).padStart(2,"0");
+  }
+  function setupEndModeToggle(prefix, durSelId, durCustomId, timeId, endTimeId){
+    const toggle = document.getElementById(prefix+"EndModeToggle");
+    toggle.addEventListener("click",(e)=>{
+      const b = e.target.closest("button"); if(!b) return;
+      toggle.querySelectorAll("button").forEach(x=> x.classList.toggle("active", x===b));
+      const isEnd = b.dataset.mode==="end";
+      document.getElementById(prefix+"DurationWrap").style.display = isEnd ? "none" : "block";
+      document.getElementById(prefix+"EndTimeWrap").style.display = isEnd ? "block" : "none";
+      if(isEnd){
+        const startTime = document.getElementById(timeId).value;
+        const endEl = document.getElementById(endTimeId);
+        if(startTime && !endEl.value){
+          const dur = resolveDuration(document.getElementById(durSelId), document.getElementById(durCustomId));
+          endEl.value = computeEndFromDuration(startTime, dur);
+        }
+      }
+    });
+  }
+  function setEndModeTo(prefix, mode){
+    const toggle = document.getElementById(prefix+"EndModeToggle");
+    toggle.querySelectorAll("button").forEach(x=> x.classList.toggle("active", x.dataset.mode===mode));
+    document.getElementById(prefix+"DurationWrap").style.display = mode==="end" ? "none" : "block";
+    document.getElementById(prefix+"EndTimeWrap").style.display = mode==="end" ? "block" : "none";
+  }
+  function getEndMode(prefix){
+    return document.querySelector("#"+prefix+"EndModeToggle button.active").dataset.mode;
+  }
+  function resolveDurationField(prefix, startTime, durSelId, durCustomId, endTimeId){
+    if(getEndMode(prefix)==="end"){
+      const endTime = document.getElementById(endTimeId).value;
+      if(!endTime) return null;
+      return computeDurationFromEnd(startTime, endTime);
+    }
+    return resolveDuration(document.getElementById(durSelId), document.getElementById(durCustomId));
+  }
+  setupEndModeToggle("day","dayTaskDuration","dayTaskDurationCustom","dayTaskTime","dayTaskEndTime");
+  setupEndModeToggle("cat","catTaskDuration","catTaskDurationCustom","catTaskTime","catTaskEndTime");
+  setupEndModeToggle("edit","editTaskDuration","editTaskDurationCustom","editTaskTime","editTaskEndTime");
 
   function setDayFormKind(kind){
     state.dayFormKind = kind;
@@ -1648,6 +1892,7 @@
     document.getElementById("dayAddToggle").style.display="none";
     document.getElementById("dayAddForm").style.display="flex";
     setDayFormKind("normal");
+    setEndModeTo("day","duration");
   });
   document.getElementById("dayAddCancel").addEventListener("click", ()=>{
     document.getElementById("dayAddForm").style.display="none";
@@ -1656,6 +1901,7 @@
     document.getElementById("dayRepeatDays").style.display="none";
     state.scheduleFormDays.clear();
     setDayFormKind("normal");
+    setEndModeTo("day","duration");
     document.querySelectorAll("#dayRepeatDays .day-chip.active").forEach(c=>c.classList.remove("active"));
   });
   document.getElementById("dayTaskRepeat").addEventListener("change", function(){
@@ -1670,9 +1916,10 @@
   document.getElementById("dayAddForm").addEventListener("submit", function(e){
     e.preventDefault();
     const time = document.getElementById("dayTaskTime").value;
-    const duration = resolveDuration(document.getElementById("dayTaskDuration"), document.getElementById("dayTaskDurationCustom"));
-    const comment = document.getElementById("dayTaskComment").value.trim();
     if(!time) return;
+    const duration = resolveDurationField("day", time, "dayTaskDuration", "dayTaskDurationCustom", "dayTaskEndTime");
+    if(duration===null){ alert("Informe um horário final válido."); return; }
+    const comment = document.getElementById("dayTaskComment").value.trim();
 
     if(state.dayFormKind === "session"){
       const parentId = document.getElementById("dayTaskParent").value;
@@ -1680,6 +1927,7 @@
       state.sessions.push({ id: uid(), parentId, date: dateKey(state.selectedDate), time, duration, done:false, comment });
       persist();
       this.reset();
+      setEndModeTo("day","duration");
       setDayFormKind("normal");
       renderDay(); renderHome();
       return;
@@ -1697,12 +1945,14 @@
     state.tasks.push({
       id: uid(), text: title, category, type, comment, urgent, done:false, time, duration,
       date: repeat ? null : dateKey(state.selectedDate),
-      repeatDays: repeat ? repeatDays : null
+      repeatDays: repeat ? repeatDays : null,
+      order: nextTaskOrder()
     });
     persist();
     this.reset();
     document.getElementById("dayTypeField").style.display = "none";
     document.getElementById("dayTaskDurationCustom").style.display = "none";
+    setEndModeTo("day","duration");
     state.scheduleFormDays.clear();
     document.getElementById("dayRepeatDays").style.display="none";
     document.querySelectorAll("#dayRepeatDays .day-chip.active").forEach(c=>c.classList.remove("active"));
@@ -1730,7 +1980,7 @@
   function renderCategory(){
     const catKey = state.activeCategory;
     const cat = CATS[catKey];
-    const tasks = state.tasks.filter(t=>t.category===catKey);
+    const tasks = state.tasks.filter(t=>t.category===catKey).sort((a,b)=>(a.order||0)-(b.order||0));
     document.getElementById("catSub").textContent = tasks.length + " tarefa" + (tasks.length!==1?"s":"") + " nesta área";
 
     renderCatStats(catKey);
@@ -1747,6 +1997,7 @@
         const isRepeat = t.repeatDays && t.repeatDays.length;
         const li = document.createElement("li");
         li.className = "task-item" + (!isRepeat && t.done ? " done" : "") + (t.urgent ? " urgent" : "");
+        li.dataset.taskId = t.id;
 
         const check = document.createElement("button");
         check.className = "stamp-check" + ((isRepeat ? t.active!==false : t.done) ? " checked" : "");
@@ -1799,12 +2050,19 @@
           }
         }
 
-        li.append(check, body);
+        const handle = document.createElement("span");
+        handle.className = "drag-handle";
+        handle.setAttribute("aria-label","Arrastar para reordenar");
+        handle.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
+
+        li.append(check, body, handle);
         list.appendChild(li);
         attachTaskCardInteractions(li, body, check, t, catKey);
+        attachDragReorder(list, li, handle);
       });
     }
   }
+
 
   function renderCatStats(catKey){
     const box = document.getElementById("catStats");
@@ -2036,6 +2294,7 @@
     document.getElementById("catRepeatDays").style.display="none";
     document.getElementById("catDateField").style.display="block";
     document.getElementById("catTaskDurationCustom").style.display="none";
+    setEndModeTo("cat","duration");
     state.catFormDays.clear();
     document.querySelectorAll("#catRepeatDays .day-chip.active").forEach(c=>c.classList.remove("active"));
   }
@@ -2071,7 +2330,9 @@
     let time=null, duration=60, date=null, repeatDays=null, deadline=null;
     if(scheduled){
       time = document.getElementById("catTaskTime").value;
-      duration = resolveDuration(document.getElementById("catTaskDuration"), document.getElementById("catTaskDurationCustom"));
+      if(!time){ alert("Informe um horário para agendar."); return; }
+      duration = resolveDurationField("cat", time, "catTaskDuration", "catTaskDurationCustom", "catTaskEndTime");
+      if(duration===null){ alert("Informe um horário final válido."); return; }
       const repeat = document.getElementById("catTaskRepeat").checked;
       if(repeat){
         repeatDays = Array.from(state.catFormDays).sort();
@@ -2079,11 +2340,10 @@
       } else {
         date = document.getElementById("catTaskDate").value || dateKey(today);
       }
-      if(!time){ alert("Informe um horário para agendar."); return; }
     } else {
       deadline = document.getElementById("catTaskDeadline").value || null;
     }
-    state.tasks.push({ id: uid(), text:title, category: state.activeCategory, type, comment, urgent, done:false, time, duration, date, repeatDays, deadline });
+    state.tasks.push({ id: uid(), text:title, category: state.activeCategory, type, comment, urgent, done:false, time, duration, date, repeatDays, deadline, order: nextTaskOrder() });
     persist();
     resetCatForm();
     renderCategory(); renderHome();
