@@ -377,6 +377,7 @@
   .stat-period-toggle button.active{background:var(--ink);color:var(--marigold);}
   .stat-frac-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
   .stat-frac-card{flex:1;min-width:90px;background:var(--fill);border:1px solid var(--line);border-radius:var(--radius-md);padding:10px 12px;}
+  .stat-frac-card.clickable{cursor:pointer;border-color:var(--marigold-dark);}
   .stat-frac-card .sf-label{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);}
   .stat-frac-card .sf-value{font-family:var(--font-display);font-size:22px;margin-top:2px;color:var(--ink-text);}
 
@@ -386,6 +387,12 @@
   .hc-bar{width:100%;max-width:26px;background:var(--c-faculdade);border-radius:4px 4px 0 0;min-height:2px;transition:height .2s;}
   .hc-bar-wrap.month .hc-bar{max-width:8px;border-radius:2px 2px 0 0;}
   .hc-label{font-family:var(--font-mono);font-size:8.5px;color:var(--muted);margin-top:4px;height:11px;}
+  .hours-cell{border:1px solid var(--line);border-radius:6px;background:var(--fill);aspect-ratio:1;position:relative;
+    display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:9.5px;color:var(--muted);}
+  .hours-cell.outside{opacity:.3;}
+  .hours-cell.today{border-color:var(--marigold-dark);}
+  .hours-cell.has-hours{background:color-mix(in srgb, var(--c-faculdade) 24%, var(--fill));color:var(--ink-text);font-weight:700;}
+  .hours-cell .hc-num{position:absolute;top:2px;right:3px;font-size:6.5px;color:var(--muted);font-weight:400;}
   .career-money-card{background:linear-gradient(135deg, color-mix(in srgb, var(--c-carreira) 22%, var(--paper)), var(--fill));
     border:1px solid var(--line);border-radius:var(--radius-md);padding:14px;margin-bottom:14px;}
   .career-money-card .cm-label{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);}
@@ -794,7 +801,7 @@
     carreira:{ label:"Carreira", parent:"carreira" }
   };
   const HOURLY_RATE = 18.40;
-  const APP_VERSION = "1.2";
+  const APP_VERSION = "1.3";
 
   function loadJSON(key, fallback){ try{ const r=localStorage.getItem(key); return r?JSON.parse(r):fallback; }catch(e){ return fallback; } }
   function persist(){
@@ -802,7 +809,7 @@
     localStorage.setItem(SESSIONS_KEY, JSON.stringify(state.sessions));
     localStorage.setItem(TRACKERS_KEY, JSON.stringify({
       dietLog: state.dietLog, workoutLog: state.workoutLog, workoutGoal: state.workoutGoal,
-      occStatus: state.occStatus, occSkips: state.occSkips
+      occStatus: state.occStatus, occSkips: state.occSkips, extensaoPriorHours: state.extensaoPriorHours
     }));
   }
 
@@ -816,6 +823,7 @@
     workoutGoal: trackerData.workoutGoal || 4,
     occStatus: trackerData.occStatus || {},
     occSkips: trackerData.occSkips || {},
+    extensaoPriorHours: trackerData.extensaoPriorHours!==undefined ? trackerData.extensaoPriorHours : 87.5,
     weekStart: startOfWeek(today),
     selectedDate: new Date(today.getFullYear(), today.getMonth(), today.getDate()),
     activeCategory: null,
@@ -2105,13 +2113,15 @@
           fracCard("Cardio", cardioOccs.filter(o=>o.done).length, cardioOccs.length);
         box.appendChild(row);
       } else if(catKey === "faculdade"){
+        function extensaoHoursForDate(date){
+          const dOccs = getOccurrencesForDate(date).filter(o=>o.category==="faculdade" && o.type==="extensao" && o.done);
+          return dOccs.reduce((sum,o)=> sum + (o.duration||60), 0) / 60;
+        }
         function hoursByDay(start, days){
           const arr = [];
           let cur = new Date(start);
           for(let i=0;i<days;i++){
-            const dOccs = getOccurrencesForDate(cur).filter(o=>o.category==="faculdade" && o.type==="extensao" && o.done);
-            const hrs = dOccs.reduce((sum,o)=> sum + (o.duration||60), 0) / 60;
-            arr.push({ date:new Date(cur), hours:hrs });
+            arr.push({ date:new Date(cur), hours:extensaoHoursForDate(cur) });
             cur = addDays(cur,1);
           }
           return arr;
@@ -2121,40 +2131,85 @@
         chartTitle.textContent = "Horas de extensão — " + (state.statPeriod==="week" ? "esta semana" : MONTHS[today.getMonth()]);
         box.appendChild(chartTitle);
 
-        const data = state.statPeriod==="week"
-          ? hoursByDay(rangeStart, 7)
-          : hoursByDay(startOfMonth(today), endOfMonth(today).getDate());
-        const maxH = Math.max(1, ...data.map(d=>d.hours));
-        const chart = document.createElement("div");
-        chart.className = "hours-chart" + (state.statPeriod==="month" ? " month" : "");
-        data.forEach(d=>{
-          const wrap = document.createElement("div");
-          wrap.className = "hc-bar-wrap" + (state.statPeriod==="month" ? " month" : "");
-          const bar = document.createElement("div");
-          bar.className = "hc-bar";
-          bar.style.height = Math.max(2,(d.hours/maxH)*100) + "%";
-          if(isSameDay(d.date,today)) bar.style.background = "var(--marigold-dark)";
-          bar.title = d.date.getDate()+"/"+(d.date.getMonth()+1)+" — "+d.hours.toLocaleString("pt-BR",{maximumFractionDigits:1})+"h";
-          const label = document.createElement("div");
-          label.className = "hc-label";
-          label.textContent = state.statPeriod==="week" ? DAY_LETTERS[d.date.getDay()] : (d.date.getDate()%5===1 || d.date.getDate()===endOfMonth(today).getDate() ? d.date.getDate() : "");
-          wrap.append(bar,label);
-          chart.appendChild(wrap);
-        });
-        box.appendChild(chart);
+        if(state.statPeriod==="week"){
+          const data = hoursByDay(rangeStart, 7);
+          const maxH = Math.max(1, ...data.map(d=>d.hours));
+          const chart = document.createElement("div");
+          chart.className = "hours-chart";
+          data.forEach(d=>{
+            const wrap = document.createElement("div");
+            wrap.className = "hc-bar-wrap";
+            const bar = document.createElement("div");
+            bar.className = "hc-bar";
+            bar.style.height = Math.max(2,(d.hours/maxH)*100) + "%";
+            if(isSameDay(d.date,today)) bar.style.background = "var(--marigold-dark)";
+            bar.title = d.date.getDate()+"/"+(d.date.getMonth()+1)+" — "+d.hours.toLocaleString("pt-BR",{maximumFractionDigits:1})+"h";
+            const label = document.createElement("div");
+            label.className = "hc-label";
+            label.textContent = DAY_LETTERS[d.date.getDay()];
+            wrap.append(bar,label);
+            chart.appendChild(wrap);
+          });
+          box.appendChild(chart);
+        } else {
+          const head = document.createElement("div");
+          head.className = "day-status-headrow month";
+          head.innerHTML = DAY_LETTERS.map(l=>'<span>'+l+'</span>').join("");
+          box.appendChild(head);
 
-        function extensaoHours(start,end){
+          const grid = document.createElement("div");
+          grid.className = "day-status-grid month";
+          const cursor = today;
+          const gridStart = startOfWeek(startOfMonth(cursor));
+          for(let i=0;i<42;i++){
+            const d = addDays(gridStart,i);
+            const outside = d.getMonth()!==cursor.getMonth();
+            const hrs = extensaoHoursForDate(d);
+            const cell = document.createElement("div");
+            cell.className = "hours-cell" + (outside?" outside":"") + (isSameDay(d,today)?" today":"") + (hrs>0?" has-hours":"");
+            cell.innerHTML = (hrs>0 ? hrs.toLocaleString("pt-BR",{maximumFractionDigits:1})+"h" : "") + '<span class="hc-num">'+d.getDate()+'</span>';
+            grid.appendChild(cell);
+          }
+          box.appendChild(grid);
+        }
+
+        function extensaoHoursRange(start,end){
           const list = getOccurrencesInRange(start,end).filter(o=>o.category==="faculdade" && o.type==="extensao" && o.done);
           return list.reduce((sum,o)=> sum + (o.duration||60), 0) / 60;
         }
-        const weekHours = extensaoHours(startOfWeek(today), addDays(startOfWeek(today),6));
-        const monthHours = extensaoHours(startOfMonth(today), endOfMonth(today));
+        function totalExtensaoHoursLogged(){
+          let minutes = 0;
+          state.tasks.filter(t=>t.category==="faculdade" && t.type==="extensao").forEach(t=>{
+            if(t.repeatDays && t.repeatDays.length){
+              Object.keys(state.occStatus).forEach(k=>{
+                if(k.startsWith(t.id+"|") && state.occStatus[k]) minutes += (t.duration||60);
+              });
+            } else if(t.done){
+              minutes += (t.duration||60);
+            }
+          });
+          state.sessions.forEach(s=>{
+            const parent = state.tasks.find(t=>t.id===s.parentId);
+            if(parent && parent.category==="faculdade" && parent.type==="extensao" && s.done){
+              minutes += (s.duration||60);
+            }
+          });
+          return minutes/60;
+        }
+        const monthHours = extensaoHoursRange(startOfMonth(today), endOfMonth(today));
+        const totalHours = totalExtensaoHoursLogged() + (state.extensaoPriorHours||0);
         const hoursRow = document.createElement("div");
         hoursRow.className = "stat-frac-row";
         hoursRow.innerHTML =
-          '<div class="stat-frac-card"><div class="sf-label">Extensão — semana</div><div class="sf-value">'+weekHours.toLocaleString("pt-BR",{maximumFractionDigits:1})+'h</div></div>'+
-          '<div class="stat-frac-card"><div class="sf-label">Extensão — mês</div><div class="sf-value">'+monthHours.toLocaleString("pt-BR",{maximumFractionDigits:1})+'h</div></div>';
+          '<div class="stat-frac-card"><div class="sf-label">Horas de Extensão Mensais</div><div class="sf-value">'+monthHours.toLocaleString("pt-BR",{maximumFractionDigits:1})+'h</div></div>'+
+          '<div class="stat-frac-card clickable" id="extTotalCard"><div class="sf-label">Horas de Extensão Totais</div><div class="sf-value">'+totalHours.toLocaleString("pt-BR",{maximumFractionDigits:1})+'h</div></div>';
         box.appendChild(hoursRow);
+        document.getElementById("extTotalCard").addEventListener("click", ()=>{
+          const v = prompt("Horas de extensão registradas antes de usar o Soshi:", state.extensaoPriorHours);
+          if(v===null) return;
+          const n = parseFloat(String(v).replace(",", "."));
+          if(!isNaN(n) && n>=0){ state.extensaoPriorHours = n; persist(); renderCatStats(catKey); }
+        });
       } else {
         const trabOccs = occs.filter(o=>o.type==="trabalho");
         const carrOccs = occs.filter(o=>o.type==="carreira");

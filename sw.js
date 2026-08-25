@@ -3,7 +3,7 @@
 // Serve do cache instantaneamente (funciona offline) e atualiza o cache
 // em segundo plano sempre que há internet disponível.
 
-const CACHE_NAME = "soshi-cache-v2"; // suba este número quando quiser forçar a limpeza do cache antigo
+const CACHE_NAME = "soshi-cache-v3"; // suba este número quando quiser forçar a limpeza do cache antigo
 
 // Arquivos essenciais para pré-carregar assim que o Service Worker instalar.
 // Ajuste os nomes se o seu arquivo principal não se chamar "index.html".
