@@ -5,7 +5,7 @@
 <link rel="apple-touch-icon" href="icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Diário de Controle</title>
 <script>
   if ("serviceWorker" in navigator) {
@@ -276,6 +276,7 @@
   .schedule-form input[type="number"], #taskEditForm input[type="number"]{font-size:16px;}
   /* garantia geral: qualquer input/select/textarea do app nunca fica abaixo de 16px (evita zoom automático do iOS) */
   input, select, textarea{font-size:max(16px, 1em);}
+  html, body{touch-action:manipulation;}
   .field-label{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:2px;display:block;}
   .mini-toggle{display:flex;background:var(--fill);border-radius:8px;padding:2px;margin-bottom:4px;}
   .mini-toggle button{flex:1;border:none;background:transparent;font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;
@@ -428,7 +429,7 @@
   <!-- ============ HOME ============ -->
   <div class="screen active" id="screen-home">
     <header class="header">
-      <span class="app-version" id="appVersion">Soshi v1.6</span>
+      <span class="app-version" id="appVersion">Soshi v1.5</span>
       <p class="eyebrow" id="greeting">Bom dia</p>
       <h1 id="headerDate">—</h1>
     </header>
@@ -799,6 +800,17 @@
 (function(){
   "use strict";
 
+  /* ---- bloqueio de zoom (pinça e duplo-toque) ---- */
+  document.addEventListener("gesturestart", e=> e.preventDefault());
+  document.addEventListener("gesturechange", e=> e.preventDefault());
+  document.addEventListener("touchmove", e=>{ if(e.touches.length > 1) e.preventDefault(); }, { passive:false });
+  let lastTouchEnd = 0;
+  document.addEventListener("touchend", e=>{
+    const now = Date.now();
+    if(now - lastTouchEnd <= 300) e.preventDefault();
+    lastTouchEnd = now;
+  }, false);
+
   /* ================= MODELO / PERSISTÊNCIA ================= */
   const TASKS_KEY = "painel_tasks_v2";
   const TRACKERS_KEY = "painel_trackers_v2";
@@ -833,7 +845,7 @@
   };
   const HOURLY_RATE = 18.40;
   const EXTENSAO_GOAL_HOURS = 300;
-  const APP_VERSION = "1.6";
+  const APP_VERSION = "1.5";
 
   /* ---- selects de horário (substituem <input type="time">, garantindo passo de 10 em 10 min em qualquer aparelho) ---- */
   const TIME_SELECT_IDS = ["dayTaskTime","dayTaskEndTime","catTaskTime","catTaskEndTime","editTaskTime","editTaskEndTime"];
@@ -2267,21 +2279,24 @@
     box.innerHTML = "";
 
     if(catKey === "academia" || catKey === "carreira" || catKey === "faculdade"){
-      const toggle = document.createElement("div");
-      toggle.className = "stat-period-toggle";
-      const toggleBtn = document.createElement("button");
-      toggleBtn.type = "button";
-      toggleBtn.className = "active";
-      toggleBtn.textContent = state.statPeriod === "week" ? "Mês" : "Semana";
-      toggleBtn.addEventListener("click", ()=>{
-        state.statPeriod = state.statPeriod === "week" ? "month" : "week";
-        renderCatStats(catKey);
-      });
-      toggle.appendChild(toggleBtn);
-      box.appendChild(toggle);
+      if(catKey !== "faculdade"){
+        const toggle = document.createElement("div");
+        toggle.className = "stat-period-toggle";
+        const toggleBtn = document.createElement("button");
+        toggleBtn.type = "button";
+        toggleBtn.className = "active";
+        toggleBtn.textContent = state.statPeriod === "week" ? "Mês" : "Semana";
+        toggleBtn.addEventListener("click", ()=>{
+          state.statPeriod = state.statPeriod === "week" ? "month" : "week";
+          renderCatStats(catKey);
+        });
+        toggle.appendChild(toggleBtn);
+        box.appendChild(toggle);
+      }
 
-      const rangeStart = state.statPeriod==="week" ? startOfWeek(today) : startOfMonth(today);
-      const rangeEnd = state.statPeriod==="week" ? addDays(rangeStart,6) : endOfMonth(today);
+      const effectivePeriod = catKey === "faculdade" ? "month" : state.statPeriod;
+      const rangeStart = effectivePeriod==="week" ? startOfWeek(today) : startOfMonth(today);
+      const rangeEnd = effectivePeriod==="week" ? addDays(rangeStart,6) : endOfMonth(today);
       const rangeDays = Math.round((rangeEnd-rangeStart)/86400000)+1;
       const occs = getOccurrencesInRange(rangeStart, rangeEnd).filter(o=>o.category===catKey);
 
@@ -2318,10 +2333,10 @@
         }
         const chartTitle = document.createElement("div");
         chartTitle.className = "diet-row-title";
-        chartTitle.textContent = "Horas de extensão — " + (state.statPeriod==="week" ? "esta semana" : MONTHS[today.getMonth()]);
+        chartTitle.textContent = "Horas de extensão — " + MONTHS[today.getMonth()];
         box.appendChild(chartTitle);
 
-        if(state.statPeriod==="week"){
+        if(effectivePeriod==="week"){
           const data = hoursByDay(rangeStart, 7);
           const maxH = Math.max(1, ...data.map(d=>d.hours));
           const chart = document.createElement("div");
