@@ -161,6 +161,9 @@
   .week-swipe-wrap{overflow:hidden;touch-action:pan-y;cursor:grab;}
   .week-swipe-wrap .week-grid{transition:transform .28s cubic-bezier(.22,1,.36,1);will-change:transform;}
   .week-swipe-wrap.dragging .week-grid{transition:none;}
+  .day-status-swipe-wrap{overflow:hidden;touch-action:pan-y;cursor:grab;}
+  .day-status-swipe-wrap .day-status-grid{transition:transform .28s cubic-bezier(.22,1,.36,1);will-change:transform;}
+  .day-status-swipe-wrap.dragging .day-status-grid{transition:none;}
 
   /* ---------- ANIMAÇÕES DE TOQUE (ESTILO APPLE) ---------- */
   :root{ --spring: cubic-bezier(.34,1.56,.64,1); }
@@ -908,6 +911,7 @@
     calendarView: "week",
     monthCursor: new Date(today.getFullYear(), today.getMonth(), 1),
     dietMonthCursor: new Date(today.getFullYear(), today.getMonth(), 1),
+    extensaoMonthCursor: new Date(today.getFullYear(), today.getMonth(), 1),
     statPeriod: "week",
     dayFormKind: "normal"
   };
@@ -1361,6 +1365,124 @@
     wrap.addEventListener("pointercancel", onUp);
   })();
 
+  /* ---- arrastar (swipe) para trocar de mês no calendário de cardio/treino/dieta ---- */
+  function setupDietMonthSwipe(wrap, grid, catKey){
+    let startX=0, startY=0, dx=0, dragging=false, pointerId=null;
+    function goToMonth(direction){
+      const w = wrap.clientWidth;
+      grid.style.transition = "transform .26s cubic-bezier(.22,1,.36,1)";
+      grid.style.transform = "translateX(" + (direction>0 ? -w : w) + "px)";
+      setTimeout(()=>{
+        const cursor = state.dietMonthCursor;
+        state.dietMonthCursor = new Date(cursor.getFullYear(), cursor.getMonth()+direction, 1);
+        renderCatStats(catKey);
+      }, 260);
+    }
+    function snapBack(){
+      grid.style.transition = "transform .26s cubic-bezier(.22,1,.36,1)";
+      grid.style.transform = "translateX(0)";
+    }
+    function onDown(e){
+      if(e.target.closest(".month-nav-mini")) return;
+      pointerId = e.pointerId;
+      startX = e.clientX; startY = e.clientY; dx = 0; dragging = false;
+    }
+    function onMove(e){
+      if(pointerId===null || e.pointerId!==pointerId) return;
+      const ddx = e.clientX-startX, ddy = e.clientY-startY;
+      if(!dragging){
+        if(Math.abs(ddx) > 10 && Math.abs(ddx) > Math.abs(ddy)){
+          dragging = true;
+          wrap.classList.add("dragging");
+          try{ wrap.setPointerCapture(pointerId); }catch(err){}
+        } else if(Math.abs(ddy) > 10){
+          pointerId = null; return;
+        } else return;
+      }
+      dx = ddx;
+      e.preventDefault();
+      grid.style.transform = "translateX(" + dx + "px)";
+    }
+    function onUp(e){
+      if(pointerId===null || e.pointerId!==pointerId) return;
+      wrap.classList.remove("dragging");
+      if(dragging){
+        if(Math.abs(dx) > 6){
+          const blocker = function(ev){ ev.stopPropagation(); ev.preventDefault(); wrap.removeEventListener("click", blocker, true); };
+          wrap.addEventListener("click", blocker, true);
+        }
+        const threshold = Math.min(90, wrap.clientWidth*0.16);
+        if(dx <= -threshold) goToMonth(1);
+        else if(dx >= threshold) goToMonth(-1);
+        else snapBack();
+      }
+      pointerId = null; dragging = false; dx = 0;
+    }
+    wrap.addEventListener("pointerdown", onDown);
+    wrap.addEventListener("pointermove", onMove);
+    wrap.addEventListener("pointerup", onUp);
+    wrap.addEventListener("pointercancel", onUp);
+  }
+
+  /* ---- arrastar (swipe) para trocar de mês no calendário de horas de extensão ---- */
+  function setupExtensaoMonthSwipe(wrap, grid, catKey){
+    let startX=0, startY=0, dx=0, dragging=false, pointerId=null;
+    function goToMonth(direction){
+      const w = wrap.clientWidth;
+      grid.style.transition = "transform .26s cubic-bezier(.22,1,.36,1)";
+      grid.style.transform = "translateX(" + (direction>0 ? -w : w) + "px)";
+      setTimeout(()=>{
+        const cursor = state.extensaoMonthCursor;
+        state.extensaoMonthCursor = new Date(cursor.getFullYear(), cursor.getMonth()+direction, 1);
+        renderCatStats(catKey);
+      }, 260);
+    }
+    function snapBack(){
+      grid.style.transition = "transform .26s cubic-bezier(.22,1,.36,1)";
+      grid.style.transform = "translateX(0)";
+    }
+    function onDown(e){
+      if(e.target.closest(".month-nav-mini")) return;
+      pointerId = e.pointerId;
+      startX = e.clientX; startY = e.clientY; dx = 0; dragging = false;
+    }
+    function onMove(e){
+      if(pointerId===null || e.pointerId!==pointerId) return;
+      const ddx = e.clientX-startX, ddy = e.clientY-startY;
+      if(!dragging){
+        if(Math.abs(ddx) > 10 && Math.abs(ddx) > Math.abs(ddy)){
+          dragging = true;
+          wrap.classList.add("dragging");
+          try{ wrap.setPointerCapture(pointerId); }catch(err){}
+        } else if(Math.abs(ddy) > 10){
+          pointerId = null; return;
+        } else return;
+      }
+      dx = ddx;
+      e.preventDefault();
+      grid.style.transform = "translateX(" + dx + "px)";
+    }
+    function onUp(e){
+      if(pointerId===null || e.pointerId!==pointerId) return;
+      wrap.classList.remove("dragging");
+      if(dragging){
+        if(Math.abs(dx) > 6){
+          const blocker = function(ev){ ev.stopPropagation(); ev.preventDefault(); wrap.removeEventListener("click", blocker, true); };
+          wrap.addEventListener("click", blocker, true);
+        }
+        const threshold = Math.min(90, wrap.clientWidth*0.16);
+        if(dx <= -threshold) goToMonth(1);
+        else if(dx >= threshold) goToMonth(-1);
+        else snapBack();
+      }
+      pointerId = null; dragging = false; dx = 0;
+    }
+    wrap.addEventListener("pointerdown", onDown);
+    wrap.addEventListener("pointermove", onMove);
+    wrap.addEventListener("pointerup", onUp);
+    wrap.addEventListener("pointercancel", onUp);
+  }
+
   function layoutOverlaps(events){
     const sorted = events.slice().sort((a,b)=>a.start-b.start);
     const clusters = [];
@@ -1578,7 +1700,7 @@
     const tasks = state.tasks.filter(t=>{
         if(t.repeatDays && t.repeatDays.length) return false; // rotinas não entram aqui
         if(t.time) return false; // tarefas com data (agendadas) não entram aqui
-        if(t.done && t.completedAt && (Date.now()-t.completedAt) > HIDE_DONE_AFTER_MS) return false;
+        if(t.done) return false; // concluídas somem daqui (mas continuam nas abas de categoria)
         return true;
       }).sort((a,b)=>{
         const ua = a.urgent ? 0 : 1, ub = b.urgent ? 0 : 1;
@@ -2185,13 +2307,26 @@
     if(t.deadline) return 1;
     return 0;
   }
+  function taskReferenceTime(t){
+    // data que conta pro prazo de 7 dias pra sumir: a data/prazo da própria tarefa, quando existir;
+    // senão (tarefas sem data nem prazo), cai pra data em que foi marcada como concluída.
+    const dateStr = t.deadline || t.date || null;
+    if(dateStr){
+      const [yy,mm,dd] = dateStr.split("-").map(Number);
+      return new Date(yy, mm-1, dd, 23, 59, 59, 999).getTime();
+    }
+    return t.completedAt || null;
+  }
   function renderCategory(){
     const catKey = state.activeCategory;
     const cat = CATS[catKey];
     const tasks = state.tasks.filter(t=>{
         if(t.category!==catKey) return false;
         const isRepeat = t.repeatDays && t.repeatDays.length;
-        if(!isRepeat && t.done && t.completedAt && (Date.now()-t.completedAt) > HIDE_DONE_AFTER_MS) return false;
+        if(!isRepeat && t.done){
+          const ref = taskReferenceTime(t);
+          if(ref && (Date.now()-ref) > HIDE_DONE_AFTER_MS) return false;
+        }
         return true;
       }).sort((a,b)=>{
         const ra = taskTypeRank(a), rb = taskTypeRank(b);
@@ -2361,7 +2496,12 @@
         }
         const chartTitle = document.createElement("div");
         chartTitle.className = "diet-row-title";
-        chartTitle.textContent = "Horas de extensão — " + MONTHS[today.getMonth()];
+        const extCursor = state.extensaoMonthCursor;
+        chartTitle.innerHTML = '<span>Horas de extensão</span><span class="month-nav-mini">'+
+          '<button type="button" id="extMonthPrev" aria-label="Mês anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M15 18l-6-6 6-6"/></svg></button>'+
+          '<span>'+MONTHS[extCursor.getMonth()].slice(0,3)+" "+extCursor.getFullYear()+'</span>'+
+          '<button type="button" id="extMonthNext" aria-label="Próximo mês"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M9 18l6-6-6-6"/></svg></button>'+
+          '</span>';
         box.appendChild(chartTitle);
 
         if(effectivePeriod==="week"){
@@ -2390,9 +2530,11 @@
           head.innerHTML = DAY_LETTERS.map(l=>'<span>'+l+'</span>').join("");
           box.appendChild(head);
 
+          const swipeWrap = document.createElement("div");
+          swipeWrap.className = "day-status-swipe-wrap";
           const grid = document.createElement("div");
           grid.className = "day-status-grid month";
-          const cursor = today;
+          const cursor = extCursor;
           const gridStart = startOfWeek(startOfMonth(cursor));
           for(let i=0;i<42;i++){
             const d = addDays(gridStart,i);
@@ -2403,7 +2545,15 @@
             cell.innerHTML = (hrs>0 ? hrs.toLocaleString("pt-BR",{maximumFractionDigits:1})+"h" : "") + '<span class="hc-num">'+d.getDate()+'</span>';
             grid.appendChild(cell);
           }
-          box.appendChild(grid);
+          swipeWrap.appendChild(grid);
+          box.appendChild(swipeWrap);
+          document.getElementById("extMonthPrev").addEventListener("click", ()=>{
+            state.extensaoMonthCursor = new Date(cursor.getFullYear(), cursor.getMonth()-1, 1); renderCatStats(catKey);
+          });
+          document.getElementById("extMonthNext").addEventListener("click", ()=>{
+            state.extensaoMonthCursor = new Date(cursor.getFullYear(), cursor.getMonth()+1, 1); renderCatStats(catKey);
+          });
+          setupExtensaoMonthSwipe(swipeWrap, grid, catKey);
         }
 
         function extensaoHoursRange(start,end){
@@ -2533,10 +2683,12 @@
           '<button type="button" id="dietMonthNext" aria-label="Próximo mês"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M9 18l6-6-6-6"/></svg></button>'+
           '</span>';
         box.appendChild(title);
+        const swipeWrap = document.createElement("div");
+        swipeWrap.className = "day-status-swipe-wrap";
         const head = document.createElement("div");
         head.className = "day-status-headrow month";
         head.innerHTML = DAY_LETTERS.map(l=>'<span>'+l+'</span>').join("");
-        box.appendChild(head);
+        swipeWrap.appendChild(head);
         const grid = document.createElement("div");
         grid.className = "day-status-grid month";
         const gridStart = startOfWeek(startOfMonth(cursor));
@@ -2544,13 +2696,15 @@
           const d = addDays(gridStart,i);
           grid.appendChild(buildStatusCell(d, true, d.getMonth()!==cursor.getMonth()));
         }
-        box.appendChild(grid);
+        swipeWrap.appendChild(grid);
+        box.appendChild(swipeWrap);
         document.getElementById("dietMonthPrev").addEventListener("click", ()=>{
           state.dietMonthCursor = new Date(cursor.getFullYear(), cursor.getMonth()-1, 1); renderCatStats(catKey);
         });
         document.getElementById("dietMonthNext").addEventListener("click", ()=>{
           state.dietMonthCursor = new Date(cursor.getFullYear(), cursor.getMonth()+1, 1); renderCatStats(catKey);
         });
+        setupDietMonthSwipe(swipeWrap, grid, catKey);
       }
 
       const legend = document.createElement("div");
