@@ -2191,7 +2191,7 @@
   }
   function populateParentTaskSelect(){
     const sel = document.getElementById("dayTaskParent");
-    const deadlineTasks = state.tasks.filter(t=> !t.time && !(t.repeatDays && t.repeatDays.length));
+    const deadlineTasks = state.tasks.filter(t=> !t.time && !(t.repeatDays && t.repeatDays.length) && !t.done);
     sel.innerHTML = "";
     if(!deadlineTasks.length){
       sel.innerHTML = '<option value="">Nenhuma tarefa com prazo cadastrada</option>';
@@ -2299,7 +2299,7 @@
     renderCategory();
   }
 
-  const HIDE_DONE_AFTER_MS = 7*24*60*60*1000;
+  const HIDE_DONE_AFTER_MS = 1*24*60*60*1000;
   function taskTypeRank(t){
     // 0 = sem data nem prazo (mais importante) · 1 = com prazo · 2 = com data · 3 = rotina (menos importante)
     if(t.repeatDays && t.repeatDays.length) return 3;
