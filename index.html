@@ -357,6 +357,7 @@
   .task-item.done .task-title{text-decoration:line-through;}
   .task-item.urgent{border-color:var(--urgent-color);box-shadow:0 0 0 1px rgba(229,67,62,0.3);}
   .task-item.routine{opacity:.85;}
+  .task-item.routine.paused{opacity:.55;}
   .task-item.routine .task-body{padding-left:2px;}
   .task-item.home-task{border-left:3px solid color-mix(in srgb, var(--cat-color) 65%, var(--line));
     background:color-mix(in srgb, var(--cat-color) 6%, var(--fill));}
@@ -364,7 +365,7 @@
   .home-task-cat{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;
     color:var(--cat-color);margin-top:2px;display:block;}
   .task-item.longpress-active{box-shadow:0 0 0 2px var(--urgent-color) inset;background:rgba(229,67,62,0.08);}
-  .task-item.dragging{opacity:.9;box-shadow:0 8px 20px rgba(0,0,0,0.45);transform:scale(1.02);position:relative;z-index:5;background:var(--paper);}
+  .task-item.dragging{opacity:.97;box-shadow:0 14px 30px rgba(0,0,0,0.55);position:relative;z-index:50;background:var(--paper);pointer-events:none;}
   .drag-handle{flex-shrink:0;width:26px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--muted);
     cursor:grab;touch-action:none;}
   .drag-handle svg{width:15px;height:15px;}
@@ -800,6 +801,10 @@
             <button type="button" class="day-chip" data-day="5">S</button>
             <button type="button" class="day-chip" data-day="6">S</button>
           </div>
+          <div class="mini-toggle" id="editRoutineActiveToggle" style="margin-top:8px;">
+            <button type="button" data-active="true">Ativa</button>
+            <button type="button" data-active="false">Encerrada</button>
+          </div>
         </div>
       </div>
 
@@ -1076,7 +1081,8 @@
     state.tasks.forEach(t => {
       if(!t.time) return;
       if(t.repeatDays && t.repeatDays.length){
-        if(t.repeatDays.includes(weekday) && !state.occSkips[t.id+"|"+key]){
+        const paused = t.active===false && t.pausedFrom && key >= t.pausedFrom;
+        if(t.repeatDays.includes(weekday) && !state.occSkips[t.id+"|"+key] && !paused){
           list.push({ task:t, key:t.id+"|"+key, isRepeat:true,
             time:t.time, duration:t.duration||60, title:t.text, category:t.category, type:t.type||null, comment:t.comment||"", urgent:!!t.urgent,
             done: !!state.occStatus[t.id+"|"+key] });
@@ -1191,37 +1197,81 @@
     li.addEventListener("contextmenu",(e)=> e.preventDefault());
   }
   function attachDragReorder(list, li, handle){
-    let dragging=false, pointerId=null;
+    let dragging=false, pointerId=null, startY=0, baseOffsetTop=0, itemHeight=0;
     function getItems(){ return Array.from(list.querySelectorAll(".task-item")); }
+
     handle.addEventListener("pointerdown",(e)=>{
       e.stopPropagation();
       e.preventDefault();
       pointerId = e.pointerId;
       dragging = true;
+      startY = e.clientY;
+      baseOffsetTop = li.offsetTop;
+      itemHeight = li.offsetHeight;
       li.classList.add("dragging");
+      li.style.zIndex = 50;
+      li.style.transition = "none";
+      if(navigator.vibrate) navigator.vibrate(8);
       try{ handle.setPointerCapture(pointerId); }catch(err){}
     });
+
     handle.addEventListener("pointermove",(e)=>{
       if(!dragging || e.pointerId!==pointerId) return;
       e.preventDefault();
-      const y = e.clientY;
-      const siblings = getItems().filter(x=>x!==li);
-      let targetNode = null;
-      for(const sib of siblings){
-        const rect = sib.getBoundingClientRect();
-        const midY = rect.top + rect.height/2;
-        if(y < midY){ targetNode = sib; break; }
+      const deltaY = e.clientY - startY;
+      const projectedCenter = baseOffsetTop + deltaY + itemHeight/2;
+
+      // captura posição atual dos vizinhos antes de qualquer troca (pra animar o deslocamento deles depois)
+      const others = getItems().filter(x=>x!==li);
+      const firstRects = new Map();
+      others.forEach(o=> firstRects.set(o, o.getBoundingClientRect()));
+
+      // permite atravessar várias tarefas numa só passada, sem soltar o toque
+      let moved = true;
+      while(moved){
+        moved = false;
+        const idx = Array.prototype.indexOf.call(list.children, li);
+        const prev = list.children[idx-1];
+        const next = list.children[idx+1];
+        if(prev && prev.classList && prev.classList.contains("task-item")){
+          const prevCenter = prev.offsetTop + prev.offsetHeight/2;
+          if(projectedCenter < prevCenter){ list.insertBefore(li, prev); moved = true; continue; }
+        }
+        if(next && next.classList && next.classList.contains("task-item")){
+          const nextCenter = next.offsetTop + next.offsetHeight/2;
+          if(projectedCenter > nextCenter){ list.insertBefore(next, li); moved = true; continue; }
+        }
       }
-      if(targetNode){
-        if(targetNode !== li.nextSibling) list.insertBefore(li, targetNode);
-      } else if(li !== list.lastElementChild){
-        list.appendChild(li);
-      }
+
+      // anima os vizinhos deslizando pra posição nova (técnica FLIP)
+      others.forEach(o=>{
+        const first = firstRects.get(o);
+        const last = o.getBoundingClientRect();
+        const dy = first.top - last.top;
+        if(Math.abs(dy) > 0.5){
+          o.style.transition = "none";
+          o.style.transform = "translateY("+dy+"px)";
+          requestAnimationFrame(()=>{
+            o.style.transition = "transform .22s cubic-bezier(.22,1,.36,1)";
+            o.style.transform = "";
+          });
+        }
+      });
+
+      // o item arrastado segue o dedo 1:1, flutuando por cima dos outros
+      const translateY = deltaY - (li.offsetTop - baseOffsetTop);
+      li.style.transform = "translateY("+translateY+"px) scale(1.03)";
     });
+
     function finishDrag(e){
       if(!dragging || e.pointerId!==pointerId) return;
       dragging = false;
       li.classList.remove("dragging");
+      li.style.transition = "transform .22s cubic-bezier(.22,1,.36,1)";
+      li.style.transform = "";
+      requestAnimationFrame(()=>{
+        setTimeout(()=>{ li.style.transition = ""; li.style.zIndex = ""; }, 230);
+      });
       getItems().forEach((item,i)=>{
         const tk = state.tasks.find(x=>x.id===item.dataset.taskId);
         if(tk) tk.order = i;
@@ -1974,6 +2024,10 @@
       document.querySelectorAll("#editRepeatDays .day-chip").forEach(chip=>{
         chip.classList.toggle("active", editState.repeatDays.has(parseInt(chip.dataset.day,10)));
       });
+      editState.routineActive = isRepeat ? (t.active !== false) : true;
+      document.querySelectorAll("#editRoutineActiveToggle button").forEach(btn=>{
+        btn.classList.toggle("active", (btn.dataset.active === "true") === editState.routineActive);
+      });
     }
 
     document.getElementById("taskEditOverlay").classList.add("active");
@@ -2032,6 +2086,13 @@
     if(editState.repeatDays.has(day)){ editState.repeatDays.delete(day); chip.classList.remove("active"); }
     else { editState.repeatDays.add(day); chip.classList.add("active"); }
   });
+  document.getElementById("editRoutineActiveToggle").addEventListener("click", (e)=>{
+    const btn = e.target.closest("button"); if(!btn) return;
+    editState.routineActive = btn.dataset.active === "true";
+    document.querySelectorAll("#editRoutineActiveToggle button").forEach(b=>{
+      b.classList.toggle("active", b===btn);
+    });
+  });
   document.getElementById("editTaskDeleteBtn").addEventListener("click", ()=>{
     if(editingSession){
       const s = editingSession;
@@ -2089,6 +2150,11 @@
         const days = Array.from(editState.repeatDays).sort();
         if(days.length===0){ alert("Selecione ao menos um dia para a repetição."); return; }
         t.repeatDays = days;
+        const wasActive = t.active !== false;
+        if(wasActive && !editState.routineActive){
+          t.pausedFrom = dateKey(new Date()); // só esconde ocorrências a partir de hoje; histórico anterior fica intacto
+        }
+        t.active = editState.routineActive;
       } else {
         t.date = document.getElementById("editTaskDate").value || t.date;
       }
@@ -2323,6 +2389,7 @@
     const tasks = state.tasks.filter(t=>{
         if(t.category!==catKey) return false;
         const isRepeat = t.repeatDays && t.repeatDays.length;
+        if(isRepeat && t.active===false) return false; // rotina concluída: some das listas, histórico continua nas estatísticas
         if(!isRepeat && t.done){
           const ref = taskReferenceTime(t);
           if(ref && (Date.now()-ref) > HIDE_DONE_AFTER_MS) return false;
@@ -2373,6 +2440,18 @@
             t.done = !t.done; t.completedAt = t.done ? Date.now() : null;
             persist(); renderCategory(); renderHome();
           });
+        } else {
+          check = document.createElement("button");
+          check.className = "stamp-check";
+          check.setAttribute("aria-label", "Concluir rotina");
+          check.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg>';
+          check.addEventListener("click", (e)=>{
+            e.stopPropagation();
+            if(!confirm('Concluir "'+t.text+'"? Ela para de aparecer no calendário e nas listas a partir de hoje. O histórico já registrado continua salvo nas estatísticas.')) return;
+            t.active = false;
+            t.pausedFrom = dateKey(new Date());
+            persist(); renderCategory(); renderHome();
+          });
         }
 
         const body = document.createElement("div");
@@ -2397,9 +2476,11 @@
         if(t.time){
           const meta = document.createElement("span");
           meta.className = "task-meta";
-          meta.textContent = isRepeat ? (t.repeatDays.slice().sort().map(d=>DAY_ABBR[d]).join(", ")+" · "+t.time)
+          const isPaused = isRepeat && t.active===false;
+          meta.textContent = isRepeat ? (t.repeatDays.slice().sort().map(d=>DAY_ABBR[d]).join(", ")+" · "+t.time+(isPaused ? " · encerrada" : ""))
             : ("agendado · "+t.date+" · "+t.time);
           body.appendChild(meta);
+          if(isPaused) li.classList.add("paused");
         } else {
           const parts = [];
           if(t.deadline){
