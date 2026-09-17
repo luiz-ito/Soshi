@@ -65,6 +65,7 @@
 
     --cardio-color:#8873C9;
     --treino-color:#5B90E0;
+    --dieta-pouco-color:#D9A94D;
     --urgent-color:#E5433E;
   }
 
@@ -273,6 +274,7 @@
   .day-event-block{
     position:absolute;border-radius:10px;padding:5px 32px 5px 8px;color:#fff;overflow:hidden;box-sizing:border-box;
     background-image:linear-gradient(155deg, rgba(255,255,255,0.15), rgba(0,0,0,0.1) 60%);
+    border:1.8px solid transparent;
     display:flex;flex-direction:column;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.15);cursor:pointer;
   }
   .day-event-block.done{opacity:.45;}
@@ -356,7 +358,7 @@
   .day-status-cell .ds-third.ds-treino.on{background:var(--treino-color);}
   .day-status-cell .ds-third.ds-treino.pending{background:color-mix(in srgb, var(--treino-color) 35%, var(--fill));}
   .day-status-cell .ds-third.ds-dieta.seguiu{background:linear-gradient(180deg, color-mix(in srgb, var(--teal) 78%, #7FCFC4) 0%, var(--teal) 100%);}
-  .day-status-cell .ds-third.ds-dieta.pouco{background:var(--marigold-dark);}
+  .day-status-cell .ds-third.ds-dieta.pouco{background:var(--dieta-pouco-color);}
   .day-status-cell .ds-third.ds-dieta.muito{background:var(--coral);}
   .day-status-cell .ds-num{position:absolute;top:2px;right:4px;font-size:8.5px;font-family:var(--font-mono);
     color:rgba(255,255,255,0.9);text-shadow:0 0 3px rgba(0,0,0,0.7);pointer-events:none;}
@@ -901,7 +903,7 @@
   };
   const HOURLY_RATE = 18.40;
   const EXTENSAO_GOAL_HOURS = 300;
-  const APP_VERSION = "1.6";
+  const APP_VERSION = "2.0";
 
   /* ---- selects de horário (substituem <input type="time">, garantindo passo de 10 em 10 min em qualquer aparelho) ---- */
   const TIME_SELECT_IDS = ["dayTaskTime","dayTaskEndTime","catTaskTime","catTaskEndTime","editTaskTime","editTaskEndTime"];
@@ -1843,7 +1845,13 @@
         bar.style.height = barHeightPx+"px";
         bar.style.left = "calc(" + ((ev.col/ev.cols)*100) + "% + 1px)";
         bar.style.width = "calc(" + (100/ev.cols) + "% - 2px)";
-        if(!ev.o.urgent) bar.style.backgroundColor = CATS[ev.o.category].hex;
+        if(!ev.o.urgent){
+          const catHex = CATS[ev.o.category].hex;
+          bar.style.backgroundColor = "color-mix(in srgb, "+catHex+" 32%, var(--paper))";
+          bar.style.borderColor = catHex;
+          bar.style.borderWidth = "1.8px";
+          bar.style.boxShadow = "0 0 6px 0 color-mix(in srgb, "+catHex+" 65%, transparent), inset 0 0 4px 0 color-mix(in srgb, "+catHex+" 30%, transparent)";
+        }
         if(ev.o.done) bar.style.opacity = "0.35";
         if(ev.cols<=2 && barHeightPx>=13){
           const label = document.createElement("span");
@@ -2119,7 +2127,13 @@
       block.style.height = h+"px";
       block.style.left = "calc(" + ((ev.col/ev.cols)*100) + "% + 2px)";
       block.style.width = "calc(" + (100/ev.cols) + "% - 4px)";
-      if(!o.urgent) block.style.backgroundColor = CATS[o.category].hex;
+      if(!o.urgent){
+        const catHex = CATS[o.category].hex;
+        block.style.backgroundColor = "color-mix(in srgb, "+catHex+" 32%, var(--paper))";
+        block.style.borderColor = catHex;
+        block.style.borderWidth = "1.8px";
+        block.style.boxShadow = "0 0 6px 0 color-mix(in srgb, "+catHex+" 65%, transparent), inset 0 0 4px 0 color-mix(in srgb, "+catHex+" 30%, transparent)";
+      }
       block.innerHTML =
         '<div class="de-time">'+o.time+(o.isRepeat?' ↻':'')+(o.isSession?' ⏱':'')+(o.urgent?' ⚡':'')+'</div><div class="de-title"></div>'+
         '<button type="button" class="de-check'+(o.done?' checked':'')+'" aria-label="Concluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M4 12l6 6L20 6"/></svg></button>';
@@ -3066,7 +3080,7 @@
         '<span><span class="legend-dot" style="background:var(--cardio-color)"></span>Cardio</span>'+
         '<span><span class="legend-dot" style="background:var(--treino-color)"></span>Treino</span>'+
         '<span><span class="legend-dot" style="background:var(--teal)"></span>Dieta +</span>'+
-        '<span><span class="legend-dot" style="background:var(--marigold-dark)"></span>Dieta +/-</span>'+
+        '<span><span class="legend-dot" style="background:var(--dieta-pouco-color)"></span>Dieta +/-</span>'+
         '<span><span class="legend-dot" style="background:var(--coral)"></span>Dieta -</span>';
       box.appendChild(legend);
 
