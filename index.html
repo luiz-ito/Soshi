@@ -13,8 +13,24 @@
       navigator.serviceWorker.register("./sw.js").catch(err => console.warn("SW falhou ao registrar:", err));
     });
   }
+  // trava a orientação em retrato (funciona quando instalado como PWA em tela cheia; navegador comum ignora silenciosamente)
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock("portrait").catch(() => {});
+  }
 </script>
 <style>
+  /* ---------- BLOQUEIO DE ORIENTAÇÃO (só retrato) ---------- */
+  .rotate-lock{
+    display:none;position:fixed;inset:0;z-index:9999;background:var(--stone);color:var(--ink-text);
+    flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;
+  }
+  .rotate-lock svg{width:52px;height:52px;color:var(--marigold);animation:rotate-hint 1.8s ease-in-out infinite;}
+  .rotate-lock p{font-family:var(--font-display);font-size:17px;margin:0;max-width:260px;line-height:1.4;}
+  @keyframes rotate-hint{ 0%,100%{ transform:rotate(0deg); } 50%{ transform:rotate(-70deg); } }
+  @media (orientation:landscape) and (max-height:600px){
+    .rotate-lock{display:flex;}
+    .app{display:none;}
+  }
   :root{
     color-scheme:dark;
     --ink:#14161F;
@@ -83,14 +99,14 @@
 
   /* ---------- HEADER ---------- */
   .header{background:linear-gradient(165deg, color-mix(in srgb, var(--ink) 82%, #3D4260) 0%, var(--ink) 55%, color-mix(in srgb, var(--ink) 90%, #000) 100%);
-    color:#F4EFE3;padding:24px 20px 20px;position:relative;overflow:hidden;flex-shrink:0;border-bottom:1px solid var(--line);}
+    color:#F4EFE3;padding:13px 20px;position:relative;overflow:hidden;flex-shrink:0;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;}
   .header::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;
     background:radial-gradient(circle, rgba(232,180,84,0.16), transparent 70%);}
-  .header .eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--marigold);margin:0 0 6px;}
-  .header h1{font-family:var(--font-display);font-size:25px;font-weight:600;margin:0 0 3px;letter-spacing:.01em;}
-  .header .subdate{font-size:13px;color:#A9B4C4;margin:0;}
-  .app-version{position:absolute;top:16px;right:18px;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;
-    color:rgba(244,239,227,0.55);z-index:1;}
+  .header .header-date{font-family:var(--font-mono);font-size:13px;font-weight:500;letter-spacing:.04em;
+    text-transform:capitalize;color:var(--ink-text);margin:0;position:relative;z-index:1;}
+  .app-version{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;
+    color:rgba(244,239,227,0.55);position:relative;z-index:1;}
 
   .screen-header{
     background:linear-gradient(165deg, color-mix(in srgb, var(--ink) 82%, #3D4260) 0%, var(--ink) 100%);color:#F4EFE3;padding:16px 16px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;position:relative;border-bottom:1px solid var(--line);
@@ -129,8 +145,11 @@
 
   /* ---------- WEEK CARD (HOME) ---------- */
   .week-header{display:flex;align-items:center;justify-content:space-between;gap:6px;}
+  .week-nav-group{display:flex;align-items:center;gap:6px;flex:1;}
+  .week-nav-group .week-label{flex:1;}
   .week-header button{background:var(--fill);border:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--ink-text);flex-shrink:0;}
   .week-header .week-label{font-family:var(--font-mono);font-size:11.5px;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;flex:1;text-align:center;}
+  .week-header #monthLabelCollapsed{font-family:var(--font-mono);font-size:11.5px;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;flex:1;text-align:center;}
   .view-toggle{display:flex;background:var(--fill);border-radius:999px;padding:2px;flex-shrink:0;}
   .view-toggle button{width:auto !important;border-radius:999px !important;padding:5px 10px;font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);background:transparent;}
   .view-toggle button.active{background:linear-gradient(180deg, color-mix(in srgb, var(--ink) 80%, #3D4260) 0%, var(--ink) 100%);color:var(--marigold);}
@@ -339,6 +358,9 @@
     color:rgba(255,255,255,0.9);text-shadow:0 0 3px rgba(0,0,0,0.7);pointer-events:none;}
 
   .legend-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-family:var(--font-mono);font-size:10px;color:var(--muted);}
+  .mini-charts-wrap{margin-top:14px;display:flex;flex-direction:column;gap:6px;}
+  .mini-chart{background:var(--fill);border:1px solid var(--line);border-radius:var(--radius-md);padding:8px 6px 4px;}
+  .mini-chart-svg{width:100%;height:auto;display:block;font-family:var(--font-mono);}
   .legend-row span{display:flex;align-items:center;gap:4px;}
   .legend-dot{width:9px;height:9px;border-radius:3px;display:inline-block;}
 
@@ -413,6 +435,9 @@
   .stat-period-toggle button.active{background:linear-gradient(180deg, color-mix(in srgb, var(--ink) 80%, #3D4260) 0%, var(--ink) 100%);color:var(--marigold);}
   .stat-frac-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
   .stat-frac-card{flex:1;min-width:90px;background:var(--fill);border:1px solid var(--line);border-radius:var(--radius-md);padding:10px 12px;}
+  .stat-frac-card.compact{padding:6px 10px;}
+  .stat-frac-card.compact .sf-value{font-size:17px;margin-top:0;}
+  .stat-frac-card.compact .sf-label{font-size:8.5px;}
   .stat-frac-card.clickable{cursor:pointer;border-color:var(--marigold-dark);}
   .stat-frac-card .sf-label{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);}
   .stat-frac-card .sf-value{font-family:var(--font-display);font-size:22px;margin-top:2px;color:var(--ink-text);}
@@ -441,14 +466,17 @@
 </style>
 </head>
 <body>
+<div class="rotate-lock" id="rotateLock">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+  <p>O Soshi funciona só na vertical. Gire seu aparelho de volta pra continuar.</p>
+</div>
 <div class="app">
 
   <!-- ============ HOME ============ -->
   <div class="screen active" id="screen-home">
     <header class="header">
+      <span class="header-date" id="headerDate">—</span>
       <span class="app-version" id="appVersion">Soshi v1.5</span>
-      <p class="eyebrow" id="greeting">Bom dia</p>
-      <h1 id="headerDate">—</h1>
     </header>
 
     <div class="content">
@@ -457,13 +485,16 @@
         <div class="card-title-row">
           <h2 class="card-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v4M16 3v4"/></svg>
-            Calendário da semana
+            Calendário
           </h2>
         </div>
         <div class="week-header">
-          <button id="prevWeek" aria-label="Semana anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M15 18l-6-6 6-6"/></svg></button>
-          <span class="week-label" id="weekLabel">—</span>
-          <button id="nextWeek" aria-label="Próxima semana"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M9 18l6-6-6-6"/></svg></button>
+          <div class="week-nav-group" id="weekNavGroup">
+            <button id="prevWeek" aria-label="Semana anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <span class="week-label" id="weekLabel">—</span>
+            <button id="nextWeek" aria-label="Próxima semana"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M9 18l6-6-6-6"/></svg></button>
+          </div>
+          <span class="month-label" id="monthLabelCollapsed" style="display:none;">—</span>
           <div class="view-toggle">
             <button type="button" id="calViewToggle">Mês</button>
           </div>
@@ -473,13 +504,10 @@
         </div>
 
         <div class="month-grid" id="monthGrid">
-          <div class="week-header" style="margin-bottom:2px;">
-            <button id="prevMonth" aria-label="Mês anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M15 18l-6-6 6-6"/></svg></button>
-            <span class="month-label" id="monthLabel">—</span>
-            <button id="nextMonth" aria-label="Próximo mês"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M9 18l6-6-6-6"/></svg></button>
-          </div>
           <div class="month-weekday-row"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span></div>
-          <div class="month-cells" id="monthCells"></div>
+          <div class="day-status-swipe-wrap" id="monthSwipeWrap">
+            <div class="month-cells" id="monthCells"></div>
+          </div>
         </div>
 
 
@@ -916,6 +944,7 @@
     calendarView: "week",
     monthCursor: new Date(today.getFullYear(), today.getMonth(), 1),
     dietMonthCursor: new Date(today.getFullYear(), today.getMonth(), 1),
+    dietWeekCursor: startOfWeek(today),
     extensaoMonthCursor: new Date(today.getFullYear(), today.getMonth(), 1),
     statPeriod: "week",
     dayFormKind: "normal"
@@ -1200,22 +1229,7 @@
     let dragging=false, pointerId=null, startY=0, baseOffsetTop=0, itemHeight=0;
     function getItems(){ return Array.from(list.querySelectorAll(".task-item")); }
 
-    handle.addEventListener("pointerdown",(e)=>{
-      e.stopPropagation();
-      e.preventDefault();
-      pointerId = e.pointerId;
-      dragging = true;
-      startY = e.clientY;
-      baseOffsetTop = li.offsetTop;
-      itemHeight = li.offsetHeight;
-      li.classList.add("dragging");
-      li.style.zIndex = 50;
-      li.style.transition = "none";
-      if(navigator.vibrate) navigator.vibrate(8);
-      try{ handle.setPointerCapture(pointerId); }catch(err){}
-    });
-
-    handle.addEventListener("pointermove",(e)=>{
+    function onMove(e){
       if(!dragging || e.pointerId!==pointerId) return;
       e.preventDefault();
       const deltaY = e.clientY - startY;
@@ -1261,17 +1275,18 @@
       // o item arrastado segue o dedo 1:1, flutuando por cima dos outros
       const translateY = deltaY - (li.offsetTop - baseOffsetTop);
       li.style.transform = "translateY("+translateY+"px) scale(1.03)";
-    });
+    }
 
     function finishDrag(e){
       if(!dragging || e.pointerId!==pointerId) return;
       dragging = false;
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", finishDrag);
+      document.removeEventListener("pointercancel", finishDrag);
       li.classList.remove("dragging");
       li.style.transition = "transform .22s cubic-bezier(.22,1,.36,1)";
       li.style.transform = "";
-      requestAnimationFrame(()=>{
-        setTimeout(()=>{ li.style.transition = ""; li.style.zIndex = ""; }, 230);
-      });
+      setTimeout(()=>{ li.style.transition = ""; li.style.zIndex = ""; }, 230);
       getItems().forEach((item,i)=>{
         const tk = state.tasks.find(x=>x.id===item.dataset.taskId);
         if(tk) tk.order = i;
@@ -1279,8 +1294,26 @@
       persist();
       pointerId = null;
     }
-    handle.addEventListener("pointerup", finishDrag);
-    handle.addEventListener("pointercancel", finishDrag);
+
+    handle.addEventListener("pointerdown",(e)=>{
+      e.stopPropagation();
+      e.preventDefault();
+      pointerId = e.pointerId;
+      dragging = true;
+      startY = e.clientY;
+      baseOffsetTop = li.offsetTop;
+      itemHeight = li.offsetHeight;
+      li.classList.add("dragging");
+      li.style.zIndex = 50;
+      li.style.transition = "none";
+      if(navigator.vibrate) navigator.vibrate(8);
+      // listeners no document (não no handle): sobrevivem à reordenação do DOM durante o arraste,
+      // diferente de pointer capture no próprio elemento, que alguns navegadores perdem quando
+      // o elemento capturado é movido de posição — causava o item "travar" no estado arrastando.
+      document.addEventListener("pointermove", onMove, { passive:false });
+      document.addEventListener("pointerup", finishDrag);
+      document.addEventListener("pointercancel", finishDrag);
+    });
   }
   function attachDayBlockInteractions(block, occ){
     let timer=null, moved=false, longPressed=false, startX=0, startY=0, activePointerId=null;
@@ -1334,9 +1367,6 @@
 
   /* ================= HEADER (HOME) ================= */
   function renderHeader(){
-    const h = today.getHours();
-    const greet = h<12 ? "Bom dia" : (h<18 ? "Boa tarde" : "Boa noite");
-    document.getElementById("greeting").textContent = greet;
     document.getElementById("headerDate").textContent = today.getDate() + " de " + MONTHS[today.getMonth()];
     document.getElementById("appVersion").textContent = "Soshi v" + APP_VERSION;
   }
@@ -1416,6 +1446,65 @@
   })();
 
   /* ---- arrastar (swipe) para trocar de mês no calendário de cardio/treino/dieta ---- */
+  /* ---- arrastar (swipe) para trocar de semana no calendário de cardio/treino/dieta ---- */
+  function setupDietWeekSwipe(wrap, grid, catKey){
+    let startX=0, startY=0, dx=0, dragging=false, pointerId=null;
+    function goToWeek(direction){
+      const w = wrap.clientWidth;
+      grid.style.transition = "transform .26s cubic-bezier(.22,1,.36,1)";
+      grid.style.transform = "translateX(" + (direction>0 ? -w : w) + "px)";
+      setTimeout(()=>{
+        state.dietWeekCursor = addDays(state.dietWeekCursor, direction*7);
+        renderCatStats(catKey);
+      }, 260);
+    }
+    function snapBack(){
+      grid.style.transition = "transform .26s cubic-bezier(.22,1,.36,1)";
+      grid.style.transform = "translateX(0)";
+    }
+    function onDown(e){
+      if(e.target.closest(".month-nav-mini")) return;
+      pointerId = e.pointerId;
+      startX = e.clientX; startY = e.clientY; dx = 0; dragging = false;
+    }
+    function onMove(e){
+      if(pointerId===null || e.pointerId!==pointerId) return;
+      const ddx = e.clientX-startX, ddy = e.clientY-startY;
+      if(!dragging){
+        if(Math.abs(ddx) > 10 && Math.abs(ddx) > Math.abs(ddy)){
+          dragging = true;
+          wrap.classList.add("dragging");
+          try{ wrap.setPointerCapture(pointerId); }catch(err){}
+        } else if(Math.abs(ddy) > 10){
+          pointerId = null; return;
+        } else return;
+      }
+      dx = ddx;
+      e.preventDefault();
+      grid.style.transition = "none";
+      grid.style.transform = "translateX(" + dx + "px)";
+    }
+    function onUp(e){
+      if(pointerId===null || e.pointerId!==pointerId) return;
+      wrap.classList.remove("dragging");
+      if(dragging){
+        if(Math.abs(dx) > 6){
+          const blocker = function(ev){ ev.stopPropagation(); ev.preventDefault(); wrap.removeEventListener("click", blocker, true); };
+          wrap.addEventListener("click", blocker, true);
+        }
+        const threshold = Math.min(90, wrap.clientWidth*0.16);
+        if(dx <= -threshold) goToWeek(1);
+        else if(dx >= threshold) goToWeek(-1);
+        else snapBack();
+      }
+      pointerId = null; dragging = false; dx = 0;
+    }
+    wrap.addEventListener("pointerdown", onDown);
+    wrap.addEventListener("pointermove", onMove);
+    wrap.addEventListener("pointerup", onUp);
+    wrap.addEventListener("pointercancel", onUp);
+  }
+
   function setupDietMonthSwipe(wrap, grid, catKey){
     let startX=0, startY=0, dx=0, dragging=false, pointerId=null;
     function goToMonth(direction){
@@ -1531,6 +1620,114 @@
     wrap.addEventListener("pointermove", onMove);
     wrap.addEventListener("pointerup", onUp);
     wrap.addEventListener("pointercancel", onUp);
+  }
+
+  /* ---- arrastar (swipe) para trocar de mês no calendário mensal da Home ---- */
+  function setupHomeMonthSwipe(wrap, grid){
+    let startX=0, startY=0, dx=0, dragging=false, pointerId=null;
+    function goToMonth(direction){
+      const w = wrap.clientWidth;
+      grid.style.transition = "transform .26s cubic-bezier(.22,1,.36,1)";
+      grid.style.transform = "translateX(" + (direction>0 ? -w : w) + "px)";
+      setTimeout(()=>{
+        const cursor = state.monthCursor;
+        state.monthCursor = new Date(cursor.getFullYear(), cursor.getMonth()+direction, 1);
+        grid.style.transition = "none";
+        grid.style.transform = "translateX(" + (direction>0 ? w : -w) + "px)";
+        renderMonth();
+        requestAnimationFrame(()=>{
+          grid.style.transition = "transform .26s cubic-bezier(.22,1,.36,1)";
+          grid.style.transform = "translateX(0)";
+        });
+      }, 260);
+    }
+    function snapBack(){
+      grid.style.transition = "transform .26s cubic-bezier(.22,1,.36,1)";
+      grid.style.transform = "translateX(0)";
+    }
+    function onDown(e){
+      pointerId = e.pointerId;
+      startX = e.clientX; startY = e.clientY; dx = 0; dragging = false;
+    }
+    function onMove(e){
+      if(pointerId===null || e.pointerId!==pointerId) return;
+      const ddx = e.clientX-startX, ddy = e.clientY-startY;
+      if(!dragging){
+        if(Math.abs(ddx) > 10 && Math.abs(ddx) > Math.abs(ddy)){
+          dragging = true;
+          wrap.classList.add("dragging");
+          try{ wrap.setPointerCapture(pointerId); }catch(err){}
+        } else if(Math.abs(ddy) > 10){
+          pointerId = null; return;
+        } else return;
+      }
+      dx = ddx;
+      e.preventDefault();
+      grid.style.transition = "none";
+      grid.style.transform = "translateX(" + dx + "px)";
+    }
+    function onUp(e){
+      if(pointerId===null || e.pointerId!==pointerId) return;
+      wrap.classList.remove("dragging");
+      if(dragging){
+        if(Math.abs(dx) > 6){
+          const blocker = function(ev){ ev.stopPropagation(); ev.preventDefault(); wrap.removeEventListener("click", blocker, true); };
+          wrap.addEventListener("click", blocker, true);
+        }
+        const threshold = Math.min(90, wrap.clientWidth*0.16);
+        if(dx <= -threshold) goToMonth(1);
+        else if(dx >= threshold) goToMonth(-1);
+        else snapBack();
+      }
+      pointerId = null; dragging = false; dx = 0;
+    }
+    wrap.addEventListener("pointerdown", onDown);
+    wrap.addEventListener("pointermove", onMove);
+    wrap.addEventListener("pointerup", onUp);
+    wrap.addEventListener("pointercancel", onUp);
+  }
+
+  /* ---- gráfico de linhas simples em SVG, com eixo Y esquerdo e (opcional) direito ---- */
+  function buildDualLineChart(cfg){
+    const W = 320, H = 150;
+    const padL = 22, padR = cfg.rightAxis ? 24 : 8, padT = 8, padB = 16;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+    const labels = cfg.labels, n = labels.length;
+    const xStep = n>1 ? plotW/(n-1) : 0;
+    function xPos(i){ return padL + i*xStep; }
+    function yPosLeft(v){ return padT + plotH - ((v-cfg.leftMin)/(cfg.leftMax-cfg.leftMin))*plotH; }
+    function yPosRight(v){ return padT + plotH - ((v-cfg.rightMin)/(cfg.rightMax-cfg.rightMin))*plotH; }
+
+    let svg = '<svg viewBox="0 0 '+W+' '+H+'" class="mini-chart-svg" preserveAspectRatio="none">';
+    const gridCount = 4;
+    for(let g=0; g<=gridCount; g++){
+      const vL = cfg.leftMin + (cfg.leftMax-cfg.leftMin)*g/gridCount;
+      const y = yPosLeft(vL);
+      svg += '<line x1="'+padL+'" y1="'+y.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+y.toFixed(1)+'" stroke="var(--line)" stroke-width="1"/>';
+      svg += '<text x="'+(padL-3)+'" y="'+(y+2.5).toFixed(1)+'" font-size="7" fill="var(--muted)" text-anchor="end">'+Math.round(vL)+'</text>';
+      if(cfg.rightAxis){
+        const vR = cfg.rightMin + (cfg.rightMax-cfg.rightMin)*g/gridCount;
+        svg += '<text x="'+(W-padR+4)+'" y="'+(y+2.5).toFixed(1)+'" font-size="7" fill="var(--muted)" text-anchor="start">'+Math.round(vR)+'</text>';
+      }
+    }
+    if(cfg.leftMin < 0 && cfg.leftMax > 0){
+      const y0 = yPosLeft(0);
+      svg += '<line x1="'+padL+'" y1="'+y0.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+y0.toFixed(1)+'" stroke="var(--muted)" stroke-width="1" stroke-dasharray="2,2"/>';
+    }
+    const labelStep = n>8 ? 2 : 1;
+    labels.forEach((lab,i)=>{
+      if(i%labelStep!==0 && i!==n-1) return;
+      svg += '<text x="'+xPos(i).toFixed(1)+'" y="'+(H-3)+'" font-size="6.5" fill="var(--muted)" text-anchor="middle">'+lab+'</text>';
+    });
+    cfg.series.forEach(s=>{
+      const yFn = s.axis==="right" ? yPosRight : yPosLeft;
+      let d = "";
+      s.values.forEach((v,i)=>{ d += (i===0?"M":"L")+xPos(i).toFixed(1)+" "+yFn(v).toFixed(1)+" "; });
+      svg += '<path d="'+d+'" fill="none" stroke="'+s.color+'" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>';
+      s.values.forEach((v,i)=>{ svg += '<circle cx="'+xPos(i).toFixed(1)+'" cy="'+yFn(v).toFixed(1)+'" r="2.1" fill="'+s.color+'"/>'; });
+    });
+    svg += '</svg>';
+    return svg;
   }
 
   function layoutOverlaps(events){
@@ -1667,6 +1864,8 @@
     document.getElementById("weekGrid").style.display = view==="week" ? "grid" : "none";
     document.getElementById("monthGrid").classList.toggle("active", view==="month");
     document.getElementById("calViewToggle").textContent = view==="week" ? "Mês" : "Semana";
+    document.getElementById("weekNavGroup").style.display = view==="week" ? "flex" : "none";
+    document.getElementById("monthLabelCollapsed").style.display = view==="month" ? "block" : "none";
     if(view==="month") renderMonth();
   }
   document.getElementById("calViewToggle").addEventListener("click", ()=>{
@@ -1677,16 +1876,10 @@
       setCalendarView("week");
     }
   });
-  document.getElementById("prevMonth").addEventListener("click", ()=>{
-    state.monthCursor = new Date(state.monthCursor.getFullYear(), state.monthCursor.getMonth()-1, 1); renderMonth();
-  });
-  document.getElementById("nextMonth").addEventListener("click", ()=>{
-    state.monthCursor = new Date(state.monthCursor.getFullYear(), state.monthCursor.getMonth()+1, 1); renderMonth();
-  });
 
   function renderMonth(){
     const cursor = state.monthCursor;
-    document.getElementById("monthLabel").textContent = MONTHS[cursor.getMonth()] + " de " + cursor.getFullYear();
+    document.getElementById("monthLabelCollapsed").textContent = MONTHS[cursor.getMonth()] + " de " + cursor.getFullYear();
     const cells = document.getElementById("monthCells");
     cells.innerHTML = "";
     const firstOfMonth = startOfMonth(cursor);
@@ -1720,6 +1913,7 @@
       if(i>=34 && d.getMonth()!==cursor.getMonth() && (i+1)%7===0) { /* trims trailing extra row visually via CSS if needed */ }
     }
   }
+  setupHomeMonthSwipe(document.getElementById("monthSwipeWrap"), document.getElementById("monthCells"));
 
 
   function renderHomeCatCards(){
@@ -2361,6 +2555,7 @@
     document.getElementById("catTypeField").style.display = types.length ? "block" : "none";
     if(types.length) fillTypeSelect(document.getElementById("catTaskType"), catKey);
     state.statPeriod = "week";
+    state.dietWeekCursor = startOfWeek(today);
     showScreen("category");
     renderCategory();
   }
@@ -2522,6 +2717,19 @@
     }
     box.style.display = "";
 
+    // no modo mensal da Academia, a aba vira só dados: tarefas ficam reservadas ao modo semanal
+    const hideTasksForMonth = (catKey === "academia" && state.statPeriod === "month");
+    const taskListEl = document.getElementById("catTaskList");
+    const addToggleEl = document.getElementById("catAddToggle");
+    const addFormEl = document.getElementById("catAddForm");
+    if(taskListEl) taskListEl.style.display = hideTasksForMonth ? "none" : "";
+    if(hideTasksForMonth){
+      if(addToggleEl) addToggleEl.style.display = "none";
+      if(addFormEl) addFormEl.style.display = "none";
+    } else if(addToggleEl && addFormEl && addFormEl.style.display !== "flex"){
+      addToggleEl.style.display = "flex";
+    }
+
     if(catKey === "academia" || catKey === "carreira" || catKey === "faculdade"){
       if(catKey !== "faculdade"){
         const toggle = document.createElement("div");
@@ -2539,13 +2747,13 @@
       }
 
       const effectivePeriod = catKey === "faculdade" ? "month" : state.statPeriod;
-      const rangeStart = effectivePeriod==="week" ? startOfWeek(today) : startOfMonth(today);
-      const rangeEnd = effectivePeriod==="week" ? addDays(rangeStart,6) : endOfMonth(today);
+      const rangeStart = effectivePeriod==="week" ? state.dietWeekCursor : startOfMonth(state.dietMonthCursor);
+      const rangeEnd = effectivePeriod==="week" ? addDays(rangeStart,6) : endOfMonth(state.dietMonthCursor);
       const rangeDays = Math.round((rangeEnd-rangeStart)/86400000)+1;
       const occs = getOccurrencesInRange(rangeStart, rangeEnd).filter(o=>o.category===catKey);
 
-      function fracCard(label, done, total){
-        return '<div class="stat-frac-card"><div class="sf-label">'+label+'</div><div class="sf-value">'+done+"/"+total+'</div></div>';
+      function fracCard(label, value, compact){
+        return '<div class="stat-frac-card'+(compact?" compact":"")+'"><div class="sf-label">'+label+'</div><div class="sf-value">'+value+'</div></div>';
       }
 
       if(catKey === "academia"){
@@ -2557,9 +2765,9 @@
         const row = document.createElement("div");
         row.className = "stat-frac-row";
         row.innerHTML =
-          fracCard("Dieta", seguiu, rangeDays) +
-          fracCard("Treino", treinoOccs.filter(o=>o.done).length, treinoOccs.length) +
-          fracCard("Cardio", cardioOccs.filter(o=>o.done).length, cardioOccs.length);
+          fracCard("Dieta", seguiu+"/"+rangeDays, true) +
+          fracCard("Treino", treinoOccs.filter(o=>o.done).length, true) +
+          fracCard("Cardio", cardioOccs.filter(o=>o.done).length, true);
         box.appendChild(row);
       } else if(catKey === "faculdade"){
         function extensaoHoursForDate(date){
@@ -2660,16 +2868,45 @@
           });
           return minutes/60;
         }
-        const monthHours = extensaoHoursRange(startOfMonth(today), endOfMonth(today));
+        function extensaoAverageMonthlyHours(){
+          // média mensal de horas de extensão, contando a partir de agosto/2026 (inclusive) até o mês atual
+          const startRef = new Date(2026, 7, 1);
+          const nowRef = new Date(today.getFullYear(), today.getMonth(), 1);
+          let totalMonths = (nowRef.getFullYear()-startRef.getFullYear())*12 + (nowRef.getMonth()-startRef.getMonth()) + 1;
+          if(totalMonths < 1) totalMonths = 1;
+          let sum = 0;
+          for(let i=0;i<totalMonths;i++){
+            const mStart = new Date(startRef.getFullYear(), startRef.getMonth()+i, 1);
+            sum += extensaoHoursRange(mStart, endOfMonth(mStart));
+          }
+          return sum/totalMonths;
+        }
+        const cursorMonthHours = extensaoHoursRange(startOfMonth(extCursor), endOfMonth(extCursor));
         const totalHours = totalExtensaoHoursLogged() + (state.extensaoPriorHours||0);
         const pct = Math.min(999, (totalHours/EXTENSAO_GOAL_HOURS)*100);
+        const avgMonthly = extensaoAverageMonthlyHours();
+        const remainingHours = Math.max(0, EXTENSAO_GOAL_HOURS - totalHours);
+        let goalForecast, goalSub;
+        if(remainingHours <= 0){
+          goalForecast = "Meta atingida"; goalSub = "";
+        } else if(avgMonthly <= 0){
+          goalForecast = "—"; goalSub = "sem média ainda";
+        } else {
+          const monthsToGoal = Math.ceil(remainingHours/avgMonthly);
+          const projected = new Date(today.getFullYear(), today.getMonth()+monthsToGoal, 1);
+          goalForecast = monthsToGoal + (monthsToGoal===1 ? " mês" : " meses");
+          goalSub = "≈ "+MONTHS[projected.getMonth()].slice(0,3)+" "+projected.getFullYear()+" · média "+avgMonthly.toLocaleString("pt-BR",{maximumFractionDigits:1})+"h/mês";
+        }
         const hoursRow = document.createElement("div");
         hoursRow.className = "stat-frac-row";
         hoursRow.innerHTML =
-          '<div class="stat-frac-card"><div class="sf-label">Horas de Extensão Mensais</div><div class="sf-value">'+monthHours.toLocaleString("pt-BR",{maximumFractionDigits:1})+'h</div></div>'+
+          '<div class="stat-frac-card"><div class="sf-label">Horas de Extensão Mensais</div><div class="sf-value">'+cursorMonthHours.toLocaleString("pt-BR",{maximumFractionDigits:1})+'h</div>'+
+          '<div class="sf-sub">'+MONTHS[extCursor.getMonth()]+'</div></div>'+
           '<div class="stat-frac-card clickable" id="extTotalCard"><div class="sf-label">Horas de Extensão Totais</div>'+
           '<div class="sf-value sf-value-sm">'+totalHours.toLocaleString("pt-BR",{maximumFractionDigits:1})+'h/'+EXTENSAO_GOAL_HOURS+'h</div>'+
-          '<div class="sf-sub">'+pct.toLocaleString("pt-BR",{maximumFractionDigits:1})+'% do total</div></div>';
+          '<div class="sf-sub">'+pct.toLocaleString("pt-BR",{maximumFractionDigits:1})+'% do total</div></div>'+
+          '<div class="stat-frac-card"><div class="sf-label">Previsão da Meta</div><div class="sf-value sf-value-sm">'+goalForecast+'</div>'+
+          '<div class="sf-sub">'+goalSub+'</div></div>';
         box.appendChild(hoursRow);
         document.getElementById("extTotalCard").addEventListener("click", ()=>{
           const v = prompt("Horas de extensão registradas antes de usar o Soshi:", state.extensaoPriorHours);
@@ -2683,8 +2920,8 @@
         const row = document.createElement("div");
         row.className = "stat-frac-row";
         row.innerHTML =
-          fracCard("Trabalho", trabOccs.filter(o=>o.done).length, trabOccs.length) +
-          fracCard("Carreira", carrOccs.filter(o=>o.done).length, carrOccs.length);
+          fracCard("Trabalho", trabOccs.filter(o=>o.done).length+"/"+trabOccs.length, false) +
+          fracCard("Carreira", carrOccs.filter(o=>o.done).length+"/"+carrOccs.length, false);
         box.appendChild(row);
 
         const monthOccs = getOccurrencesInRange(startOfMonth(today), endOfMonth(today))
@@ -2745,17 +2982,32 @@
       title.className = "diet-row-title";
 
       if(state.statPeriod === "week"){
-        title.textContent = "Cardio · Treino · Dieta — esta semana";
+        const wkStart = state.dietWeekCursor;
+        const wkEnd = addDays(wkStart,6);
+        title.innerHTML = '<span>Cardio · Treino · Dieta</span><span class="month-nav-mini">'+
+          '<button type="button" id="dietWeekPrev" aria-label="Semana anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M15 18l-6-6 6-6"/></svg></button>'+
+          '<span>'+wkStart.getDate()+" "+MONTHS[wkStart.getMonth()].slice(0,3)+" – "+wkEnd.getDate()+" "+MONTHS[wkEnd.getMonth()].slice(0,3)+'</span>'+
+          '<button type="button" id="dietWeekNext" aria-label="Próxima semana"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M9 18l6-6-6-6"/></svg></button>'+
+          '</span>';
         box.appendChild(title);
         const head = document.createElement("div");
         head.className = "day-status-headrow";
         head.innerHTML = DAY_LETTERS.map(l=>'<span>'+l+'</span>').join("");
         box.appendChild(head);
+        const swipeWrap = document.createElement("div");
+        swipeWrap.className = "day-status-swipe-wrap";
         const grid = document.createElement("div");
         grid.className = "day-status-grid";
-        const wkStart = startOfWeek(today);
         for(let i=0;i<7;i++) grid.appendChild(buildStatusCell(addDays(wkStart,i), false, false));
-        box.appendChild(grid);
+        swipeWrap.appendChild(grid);
+        box.appendChild(swipeWrap);
+        document.getElementById("dietWeekPrev").addEventListener("click", ()=>{
+          state.dietWeekCursor = addDays(wkStart,-7); renderCatStats(catKey);
+        });
+        document.getElementById("dietWeekNext").addEventListener("click", ()=>{
+          state.dietWeekCursor = addDays(wkStart,7); renderCatStats(catKey);
+        });
+        setupDietWeekSwipe(swipeWrap, grid, catKey);
       } else {
         const cursor = state.dietMonthCursor;
         title.innerHTML = '<span>Cardio · Treino · Dieta</span><span class="month-nav-mini">'+
@@ -2791,12 +3043,86 @@
       const legend = document.createElement("div");
       legend.className = "legend-row";
       legend.innerHTML =
-        '<span><span class="legend-dot" style="background:var(--cardio-color)"></span>cardio</span>'+
-        '<span><span class="legend-dot" style="background:var(--treino-color)"></span>treino</span>'+
-        '<span><span class="legend-dot" style="background:var(--teal)"></span>dieta seguida</span>'+
-        '<span><span class="legend-dot" style="background:var(--marigold-dark)"></span>furou um pouco</span>'+
-        '<span><span class="legend-dot" style="background:var(--coral)"></span>furou muito</span>';
+        '<span><span class="legend-dot" style="background:var(--cardio-color)"></span>Cardio</span>'+
+        '<span><span class="legend-dot" style="background:var(--treino-color)"></span>Treino</span>'+
+        '<span><span class="legend-dot" style="background:var(--teal)"></span>Dieta +</span>'+
+        '<span><span class="legend-dot" style="background:var(--marigold-dark)"></span>Dieta +/-</span>'+
+        '<span><span class="legend-dot" style="background:var(--coral)"></span>Dieta -</span>';
       box.appendChild(legend);
+
+      if(state.statPeriod === "month"){
+        function dietScoreForDay(d){
+          const s = state.dietLog[dateKey(d)];
+          if(s==="seguiu") return 1;
+          if(s==="muito") return -1;
+          return 0; // sem registro ou "pouco" (+/-) conta como 0
+        }
+        function countDoneInRange(start,end,type){
+          return getOccurrencesInRange(start,end).filter(o=>o.category==="academia" && o.type===type && o.done).length;
+        }
+
+        // ---- série semanal: 10 semanas atrás até a semana atual (11 pontos) ----
+        const weekPoints = [];
+        for(let i=11;i>=1;i--) weekPoints.push(addDays(startOfWeek(today), -7*i));
+        const weekLabels = weekPoints.map(w=> w.getDate()+"/"+(w.getMonth()+1));
+        const dietWeekSeries = weekPoints.map(w=>{
+          let sum=0; for(let d=0; d<7; d++) sum += dietScoreForDay(addDays(w,d));
+          return sum;
+        });
+        const treinoWeekSeries = weekPoints.map(w=> countDoneInRange(w, addDays(w,6), "treino"));
+        const cardioWeekSeries = weekPoints.map(w=> countDoneInRange(w, addDays(w,6), "cardio"));
+
+        // ---- série mensal: últimos 6 meses até o mês atual (7 pontos) ----
+        const monthPoints = [];
+        for(let i=7;i>=1;i--) monthPoints.push(new Date(today.getFullYear(), today.getMonth()-i, 1));
+        const monthLabels = monthPoints.map(m=> MONTHS[m.getMonth()].slice(0,3));
+        const dietMonthSeries = monthPoints.map(m=>{
+          let sum=0, cur=startOfMonth(m); const end=endOfMonth(m);
+          while(cur<=end){ sum += dietScoreForDay(cur); cur = addDays(cur,1); }
+          return sum;
+        });
+        const treinoMonthSeries = monthPoints.map(m=> countDoneInRange(startOfMonth(m), endOfMonth(m), "treino"));
+        const cardioMonthSeries = monthPoints.map(m=> countDoneInRange(startOfMonth(m), endOfMonth(m), "cardio"));
+
+        const chartsWrap = document.createElement("div");
+        chartsWrap.className = "mini-charts-wrap";
+
+        const t1 = document.createElement("div");
+        t1.className = "diet-row-title";
+        t1.innerHTML = "<span>Por semana (11 últimas concluídas)</span>";
+        chartsWrap.appendChild(t1);
+        const c1 = document.createElement("div");
+        c1.className = "mini-chart";
+        c1.innerHTML = buildDualLineChart({
+          labels: weekLabels,
+          series: [
+            {color:"var(--teal)", values:dietWeekSeries},
+            {color:"var(--treino-color)", values:treinoWeekSeries},
+            {color:"var(--cardio-color)", values:cardioWeekSeries}
+          ],
+          leftMin:0, leftMax:7
+        });
+        chartsWrap.appendChild(c1);
+
+        const t2 = document.createElement("div");
+        t2.className = "diet-row-title";
+        t2.innerHTML = "<span>Por mês (7 últimos concluídos)</span>";
+        chartsWrap.appendChild(t2);
+        const c2 = document.createElement("div");
+        c2.className = "mini-chart";
+        c2.innerHTML = buildDualLineChart({
+          labels: monthLabels,
+          series: [
+            {color:"var(--teal)", values:dietMonthSeries, axis:"left"},
+            {color:"var(--treino-color)", values:treinoMonthSeries, axis:"right"},
+            {color:"var(--cardio-color)", values:cardioMonthSeries, axis:"right"}
+          ],
+          leftMin:0, leftMax:30, rightMin:0, rightMax:15, rightAxis:true
+        });
+        chartsWrap.appendChild(c2);
+
+        box.appendChild(chartsWrap);
+      }
 
     } else if(catKey !== "carreira" && catKey !== "faculdade") {
       const ph = document.createElement("div");
